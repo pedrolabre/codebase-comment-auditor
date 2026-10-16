@@ -30,11 +30,15 @@ codebase-comment-auditor/
 │   │   └── Navbar.vue
 │   ├── main.js
 │   ├── parsing/
+│   │   ├── commentExtractor.js
+│   │   ├── grammars.js
+│   │   ├── languageDetector.js
 │   │   └── parserManager.js
 │   └── style.css
 ├── tailwind.config.js
 ├── tests/
 │   └── unit/
+│       ├── commentExtractor.test.js
 │       └── parserManager.test.js
 └── vite.config.js
 ```
