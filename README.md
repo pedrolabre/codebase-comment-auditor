@@ -1,0 +1,26 @@
+# codebase-comment-auditor
+
+Single Page Application (SPA) client-side desenvolvida em Vue 3, Vite e Tailwind CSS para extrair e auditar comentários de código-fonte a partir de repositórios do GitHub, arquivos compactados ou diffs de commits, utilizando Concrete Syntax Tree (Tree-sitter WASM) em tempo real, sem backend e sem uso de inteligência artificial.
+
+---
+
+## Estrutura do Projeto
+
+```text
+codebase-comment-auditor/
+├── .gitignore
+├── index.html
+├── package.json
+├── package-lock.json
+├── postcss.config.js
+├── README.md
+├── src/
+│   ├── App.vue
+│   ├── components/
+│   │   ├── ModeSelector.vue
+│   │   └── Navbar.vue
+│   ├── main.js
+│   └── style.css
+├── tailwind.config.js
+└── vite.config.js
+```
