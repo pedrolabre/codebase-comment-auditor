@@ -13,6 +13,15 @@ codebase-comment-auditor/
 ├── package.json
 ├── package-lock.json
 ├── postcss.config.js
+├── public/
+│   ├── grammars/
+│   │   ├── tree-sitter-bash.wasm
+│   │   ├── tree-sitter-css.wasm
+│   │   ├── tree-sitter-html.wasm
+│   │   ├── tree-sitter-javascript.wasm
+│   │   ├── tree-sitter-python.wasm
+│   │   └── tree-sitter-typescript.wasm
+│   └── tree-sitter.wasm
 ├── README.md
 ├── src/
 │   ├── App.vue
@@ -20,7 +29,12 @@ codebase-comment-auditor/
 │   │   ├── ModeSelector.vue
 │   │   └── Navbar.vue
 │   ├── main.js
+│   ├── parsing/
+│   │   └── parserManager.js
 │   └── style.css
 ├── tailwind.config.js
+├── tests/
+│   └── unit/
+│       └── parserManager.test.js
 └── vite.config.js
 ```
