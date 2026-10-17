@@ -31,14 +31,18 @@ codebase-comment-auditor/
 │   ├── main.js
 │   ├── parsing/
 │   │   ├── commentExtractor.js
+│   │   ├── commentNormalizer.js
 │   │   ├── grammars.js
 │   │   ├── languageDetector.js
 │   │   └── parserManager.js
-│   └── style.css
+│   ├── style.css
+│   └── utils/
+│       └── tagDetector.js
 ├── tailwind.config.js
 ├── tests/
 │   └── unit/
 │       ├── commentExtractor.test.js
+│       ├── commentNormalizer.test.js
 │       └── parserManager.test.js
 └── vite.config.js
 ```
