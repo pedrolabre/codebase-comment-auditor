@@ -6,5 +6,10 @@ export default defineConfig({
   assetsInclude: ['**/*.wasm'],
   server: {
     port: 3000
+  },
+  test: {
+    environment: 'node',
+    include: ['tests/unit/**/*.test.js'],
+    globals: false
   }
 })

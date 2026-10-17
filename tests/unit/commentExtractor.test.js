@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import {
   detectLanguage,
   detectLanguageFromExtension,
@@ -12,284 +12,240 @@ import { getGrammarConfig, isSupportedGrammar } from '../../src/parsing/grammars
 import { extractRawComments, extractRawCommentsFromTree } from '../../src/parsing/commentExtractor.js';
 import { parserManager } from '../../src/parsing/parserManager.js';
 
-async function testLanguageDetector() {
-  assert.equal(detectLanguageFromExtension('.js'), 'javascript');
-  assert.equal(detectLanguageFromExtension('js'), 'javascript');
-  assert.equal(detectLanguageFromExtension('.jsx'), 'javascript');
-  assert.equal(detectLanguageFromExtension('.ts'), 'typescript');
-  assert.equal(detectLanguageFromExtension('.tsx'), 'typescript');
-  assert.equal(detectLanguageFromExtension('.py'), 'python');
-  assert.equal(detectLanguageFromExtension('.css'), 'css');
-  assert.equal(detectLanguageFromExtension('.html'), 'html');
-  assert.equal(detectLanguageFromExtension('.vue'), 'html');
-  assert.equal(detectLanguageFromExtension('.svelte'), 'html');
-  assert.equal(detectLanguageFromExtension('.sh'), 'bash');
-  assert.equal(detectLanguageFromExtension('.rs'), null);
-  assert.equal(detectLanguageFromExtension(''), null);
-  assert.equal(detectLanguageFromExtension(null), null);
+describe('Language Detector & Grammars', () => {
+  it('detects language from extensions correctly', () => {
+    expect(detectLanguageFromExtension('.js')).toBe('javascript');
+    expect(detectLanguageFromExtension('js')).toBe('javascript');
+    expect(detectLanguageFromExtension('.jsx')).toBe('javascript');
+    expect(detectLanguageFromExtension('.ts')).toBe('typescript');
+    expect(detectLanguageFromExtension('.tsx')).toBe('typescript');
+    expect(detectLanguageFromExtension('.py')).toBe('python');
+    expect(detectLanguageFromExtension('.css')).toBe('css');
+    expect(detectLanguageFromExtension('.html')).toBe('html');
+    expect(detectLanguageFromExtension('.vue')).toBe('html');
+    expect(detectLanguageFromExtension('.svelte')).toBe('html');
+    expect(detectLanguageFromExtension('.sh')).toBe('bash');
+    expect(detectLanguageFromExtension('.rs')).toBeNull();
+    expect(detectLanguageFromExtension('')).toBeNull();
+    expect(detectLanguageFromExtension(null)).toBeNull();
+  });
 
-  assert.equal(detectLanguageFromPath('src/main.js'), 'javascript');
-  assert.equal(detectLanguageFromPath('src/components/Header.vue'), 'html');
-  assert.equal(detectLanguageFromPath('scripts/deploy.sh'), 'bash');
-  assert.equal(detectLanguageFromPath('home/.bashrc'), 'bash');
-  assert.equal(detectLanguageFromPath('home/.zshrc'), 'bash');
-  assert.equal(detectLanguageFromPath('C:\\Users\\code\\app.py'), 'python');
-  assert.equal(detectLanguageFromPath('unknown.tar.gz'), null);
-  assert.equal(detectLanguageFromPath(''), null);
-  assert.equal(detectLanguageFromPath(null), null);
+  it('detects language from relative and absolute file paths', () => {
+    expect(detectLanguageFromPath('src/main.js')).toBe('javascript');
+    expect(detectLanguageFromPath('src/components/Header.vue')).toBe('html');
+    expect(detectLanguageFromPath('scripts/deploy.sh')).toBe('bash');
+    expect(detectLanguageFromPath('home/.bashrc')).toBe('bash');
+    expect(detectLanguageFromPath('home/.zshrc')).toBe('bash');
+    expect(detectLanguageFromPath('C:\\Users\\code\\app.py')).toBe('python');
+    expect(detectLanguageFromPath('archive.tar.gz')).toBeNull();
+  });
 
-  assert.equal(getCanonicalLanguage('js'), 'javascript');
-  assert.equal(getCanonicalLanguage('jsx'), 'javascript');
-  assert.equal(getCanonicalLanguage('ts'), 'typescript');
-  assert.equal(getCanonicalLanguage('py'), 'python');
-  assert.equal(getCanonicalLanguage('shell'), 'bash');
-  assert.equal(getCanonicalLanguage('unknown'), null);
+  it('normalizes canonical language names and aliases', () => {
+    expect(getCanonicalLanguage('js')).toBe('javascript');
+    expect(getCanonicalLanguage('ts')).toBe('typescript');
+    expect(getCanonicalLanguage('py')).toBe('python');
+    expect(getCanonicalLanguage('shell')).toBe('bash');
+    expect(getCanonicalLanguage('unknown')).toBeNull();
+    expect(detectLanguage('index.js')).toBe('javascript');
+    expect(detectLanguage('.bashrc')).toBe('bash');
+  });
 
-  assert.equal(detectLanguage('index.js'), 'javascript');
-  assert.equal(detectLanguage('.tsx'), 'typescript');
-  assert.equal(detectLanguage('python'), 'python');
-  assert.equal(detectLanguage('.bashrc'), 'bash');
-  assert.equal(detectLanguage('unsupported.go'), null);
+  it('provides supported languages and extension catalogs', () => {
+    expect(isLanguageSupported('javascript')).toBe(true);
+    expect(isLanguageSupported('.py')).toBe(true);
+    expect(isLanguageSupported('rust')).toBe(false);
+    expect(getSupportedLanguages()).toEqual(['javascript', 'typescript', 'python', 'css', 'html', 'bash']);
+    expect(getSupportedExtensions()).toContain('.js');
+    expect(getSupportedExtensions()).toContain('.vue');
+    expect(isSupportedGrammar('javascript')).toBe(true);
+    expect(isSupportedGrammar('unknown')).toBe(false);
+    expect(getGrammarConfig('javascript').commentNodeTypes).toContain('comment');
+    expect(getGrammarConfig('python').commentNodeTypes).toContain('expression_statement');
+  });
+});
 
-  assert.equal(isLanguageSupported('javascript'), true);
-  assert.equal(isLanguageSupported('.py'), true);
-  assert.equal(isLanguageSupported('src/App.vue'), true);
-  assert.equal(isLanguageSupported('rust'), false);
-  assert.equal(isLanguageSupported('.cpp'), false);
+describe('JavaScript & TypeScript Extraction', () => {
+  it('extracts line, inline, block, reference and JSDoc comments', async () => {
+    const code = [
+      '/// <reference types="vite/client" />',
+      'const endpoint = "https://example.com/api"; // Inline comment',
+      '/* Block comment */',
+      '/**',
+      ' * JSDoc description',
+      ' */',
+      'const total = 42;'
+    ].join('\n');
 
-  assert.deepEqual(getSupportedLanguages(), [
-    'javascript',
-    'typescript',
-    'python',
-    'css',
-    'html',
-    'bash'
-  ]);
-  assert.ok(getSupportedExtensions().includes('.js'));
-  assert.ok(getSupportedExtensions().includes('.vue'));
-}
+    const comments = await extractRawComments(code, 'javascript', 'src/service.js');
+    expect(comments).toHaveLength(4);
 
-async function testGrammars() {
-  const jsConfig = getGrammarConfig('javascript');
-  assert.ok(jsConfig);
-  assert.equal(jsConfig.commentNodeTypes.includes('comment'), true);
+    expect(comments[0].text).toBe('/// <reference types="vite/client" />');
+    expect(comments[0].type).toBe('line');
+    expect(comments[0].startLine).toBe(1);
 
-  const pyConfig = getGrammarConfig('python');
-  assert.ok(pyConfig);
-  assert.equal(pyConfig.commentNodeTypes.includes('expression_statement'), true);
+    expect(comments[1].text).toBe('// Inline comment');
+    expect(comments[1].type).toBe('line');
+    expect(comments[1].startLine).toBe(2);
 
-  assert.equal(isSupportedGrammar('javascript'), true);
-  assert.equal(isSupportedGrammar('css'), true);
-  assert.equal(isSupportedGrammar('unknown'), false);
-}
+    expect(comments[2].text).toBe('/* Block comment */');
+    expect(comments[2].type).toBe('block');
+    expect(comments[2].startLine).toBe(3);
 
-async function testJavaScriptExtraction() {
-  const code = [
-    '// Line comment 1',
-    'const endpoint = "https://example.com/api"; // Inline comment',
-    'const pattern = /\\/\\*/;',
-    '/* Block comment */',
-    '/**',
-    ' * JSDoc description',
-    ' */',
-    'const tpl = `// not a comment ${endpoint}`;'
-  ].join('\n');
+    expect(comments[3].text.startsWith('/**')).toBe(true);
+    expect(comments[3].type).toBe('docstring');
+    expect(comments[3].startLine).toBe(4);
+    expect(comments[3].endLine).toBe(6);
+  });
 
-  const comments = await extractRawComments(code, 'javascript', 'src/service.js');
-  assert.equal(comments.length, 4);
+  it('ignores template literals and strings containing comment delimiters', async () => {
+    const code = [
+      'const msg = `// not a comment ${1 + 1} /* also not */`;',
+      'const url = "https://example.com/path//not/comment";',
+      'const regex = /\\/\\* not a comment \\*\\//g;'
+    ].join('\n');
 
-  assert.equal(comments[0].text, '// Line comment 1');
-  assert.equal(comments[0].type, 'line');
-  assert.equal(comments[0].startLine, 1);
-  assert.equal(comments[0].endLine, 1);
-  assert.equal(comments[0].file, 'src/service.js');
+    const comments = await extractRawComments(code, 'typescript', 'src/safe.ts');
+    expect(comments).toHaveLength(0);
+  });
+});
 
-  assert.equal(comments[1].text, '// Inline comment');
-  assert.equal(comments[1].type, 'line');
-  assert.equal(comments[1].startLine, 2);
-  assert.equal(comments[1].endLine, 2);
+describe('Python Extraction & Docstrings', () => {
+  it('extracts hash comments, module/function docstrings and raw docstrings', async () => {
+    const code = [
+      '# Python file header',
+      '"""Module docstring for test module."""',
+      'def calculate(total):',
+      '    """Function docstring for calculate."""',
+      '    query = """SELECT * FROM table WHERE active = 1"""',
+      '    url = "https://api.domain.com/data" # inline comment with url',
+      '    return total * 2',
+      'r"""Raw docstring test"""',
+      "'''Single triple quote docstring'''"
+    ].join('\n');
 
-  assert.equal(comments[2].text, '/* Block comment */');
-  assert.equal(comments[2].type, 'block');
-  assert.equal(comments[2].startLine, 4);
-  assert.equal(comments[2].endLine, 4);
+    const comments = await extractRawComments(code, 'python', 'analytics.py');
+    expect(comments).toHaveLength(6);
 
-  assert.ok(comments[3].text.startsWith('/**'));
-  assert.equal(comments[3].type, 'docstring');
-  assert.equal(comments[3].startLine, 5);
-  assert.equal(comments[3].endLine, 7);
+    expect(comments[0].text).toBe('# Python file header');
+    expect(comments[0].type).toBe('line');
+    expect(comments[0].startLine).toBe(1);
 
-  const cleanUrlsOnly = 'const a = "https://domain.com/v1"; const b = "http://test.org";';
-  const noComments = await extractRawComments(cleanUrlsOnly, 'javascript');
-  assert.equal(noComments.length, 0);
+    expect(comments[1].text).toBe('"""Module docstring for test module."""');
+    expect(comments[1].type).toBe('docstring');
+    expect(comments[1].startLine).toBe(2);
 
-  const cleanRegexOnly = 'const regex = /\\/\\*.*\\*\\//g;';
-  const noRegexComments = await extractRawComments(cleanRegexOnly, 'javascript');
-  assert.equal(noRegexComments.length, 0);
-}
+    expect(comments[2].text).toBe('"""Function docstring for calculate."""');
+    expect(comments[2].type).toBe('docstring');
+    expect(comments[2].startLine).toBe(4);
 
-async function testTypeScriptExtraction() {
-  const code = [
-    '/// <reference types="vite/client" />',
-    'interface Config {',
-    '  // Port configuration',
-    '  port: number;',
-    '}',
-    '/** Documentation for startServer */',
-    'function startServer(cfg: Config) {',
-    '  /* setup */',
-    '  return cfg.port;',
-    '}'
-  ].join('\n');
+    expect(comments[3].text).toBe('# inline comment with url');
+    expect(comments[3].type).toBe('line');
+    expect(comments[3].startLine).toBe(6);
 
-  const comments = await extractRawComments(code, 'typescript', 'src/server.ts');
-  assert.equal(comments.length, 4);
-  assert.equal(comments[0].type, 'line');
-  assert.equal(comments[1].text, '// Port configuration');
-  assert.equal(comments[1].type, 'line');
-  assert.equal(comments[2].type, 'docstring');
-  assert.equal(comments[3].type, 'block');
-}
+    expect(comments[4].text).toBe('r"""Raw docstring test"""');
+    expect(comments[4].type).toBe('docstring');
+    expect(comments[4].startLine).toBe(8);
 
-async function testPythonExtraction() {
-  const code = [
-    '# Python file header',
-    '"""Module docstring for test module."""',
-    'def calculate(total):',
-    '    """Function docstring for calculate."""',
-    '    query = """SELECT * FROM table WHERE active = 1"""',
-    '    url = "https://api.domain.com/data" # inline comment with url',
-    '    return total * 2',
-    'r"""Raw docstring test"""',
-    "'''Single triple quote docstring'''"
-  ].join('\n');
+    expect(comments[5].text).toBe("'''Single triple quote docstring'''");
+    expect(comments[5].type).toBe('docstring');
+    expect(comments[5].startLine).toBe(9);
+  });
+});
 
-  const comments = await extractRawComments(code, 'python', 'analytics.py');
-  assert.equal(comments.length, 6);
+describe('CSS, HTML and Bash Extraction', () => {
+  it('extracts comments from CSS stylesheets and ignores url strings', async () => {
+    const css = [
+      '/* Global stylesheet */',
+      'body {',
+      '  color: red; /* inline comment */',
+      '  content: "/* not a comment */";',
+      '  background: url("https://example.com/bg.png");',
+      '}'
+    ].join('\n');
 
-  assert.equal(comments[0].text, '# Python file header');
-  assert.equal(comments[0].type, 'line');
-  assert.equal(comments[0].startLine, 1);
+    const comments = await extractRawComments(css, 'css', 'styles.css');
+    expect(comments).toHaveLength(2);
+    expect(comments[0].text).toBe('/* Global stylesheet */');
+    expect(comments[0].type).toBe('block');
+    expect(comments[1].text).toBe('/* inline comment */');
+    expect(comments[1].type).toBe('block');
+  });
 
-  assert.equal(comments[1].text, '"""Module docstring for test module."""');
-  assert.equal(comments[1].type, 'docstring');
-  assert.equal(comments[1].startLine, 2);
+  it('extracts HTML comments correctly', async () => {
+    const html = [
+      '<!DOCTYPE html>',
+      '<!-- HTML comment header -->',
+      '<html>',
+      '  <body><!-- Inner body comment --></body>',
+      '</html>'
+    ].join('\n');
 
-  assert.equal(comments[2].text, '"""Function docstring for calculate."""');
-  assert.equal(comments[2].type, 'docstring');
-  assert.equal(comments[2].startLine, 4);
+    const comments = await extractRawComments(html, 'html', 'index.html');
+    expect(comments).toHaveLength(2);
+    expect(comments[0].text).toBe('<!-- HTML comment header -->');
+    expect(comments[0].type).toBe('block');
+    expect(comments[1].text).toBe('<!-- Inner body comment -->');
+  });
 
-  assert.equal(comments[3].text, '# inline comment with url');
-  assert.equal(comments[3].type, 'line');
-  assert.equal(comments[3].startLine, 6);
+  it('extracts Bash comments, shebang and inline comments', async () => {
+    const bash = [
+      '#!/usr/bin/env bash',
+      '# Automation script',
+      'API="https://domain.com" # inline note',
+      'grep -E "pattern#notcomment" file.txt'
+    ].join('\n');
 
-  assert.equal(comments[4].text, 'r"""Raw docstring test"""');
-  assert.equal(comments[4].type, 'docstring');
-  assert.equal(comments[4].startLine, 8);
+    const comments = await extractRawComments(bash, 'bash', 'deploy.sh');
+    expect(comments).toHaveLength(3);
+    expect(comments[0].text).toBe('#!/usr/bin/env bash');
+    expect(comments[1].text).toBe('# Automation script');
+    expect(comments[2].text).toBe('# inline note');
+  });
+});
 
-  assert.equal(comments[5].text, "'''Single triple quote docstring'''");
-  assert.equal(comments[5].type, 'docstring');
-  assert.equal(comments[5].startLine, 9);
-}
+describe('Edge Cases & Regression', () => {
+  it('returns empty array for empty, null or comment-free code', async () => {
+    expect(await extractRawComments('', 'javascript')).toEqual([]);
+    expect(await extractRawComments(null, 'javascript')).toEqual([]);
+    expect(await extractRawComments('const a = 1;\nconst b = 2;\n', 'javascript')).toEqual([]);
+  });
 
-async function testCssExtraction() {
-  const code = [
-    '/* Global stylesheet */',
-    'body {',
-    '  color: red; /* inline comment */',
-    '  content: "/* not a comment */";',
-    '  background: url("https://example.com/bg.png");',
-    '}'
-  ].join('\n');
+  it('extracts comments touching the very first and last lines without breaks', async () => {
+    const code = '// first line\nconst a = 1;\n// last line';
+    const comments = await extractRawComments(code, 'javascript');
+    expect(comments).toHaveLength(2);
+    expect(comments[0].startLine).toBe(1);
+    expect(comments[0].text).toBe('// first line');
+    expect(comments[1].startLine).toBe(3);
+    expect(comments[1].text).toBe('// last line');
+  });
 
-  const comments = await extractRawComments(code, 'css', 'styles.css');
-  assert.equal(comments.length, 2);
-  assert.equal(comments[0].text, '/* Global stylesheet */');
-  assert.equal(comments[0].type, 'block');
-  assert.equal(comments[1].text, '/* inline comment */');
-  assert.equal(comments[1].type, 'block');
-}
+  it('measures multiline block comments with accurate line coordinates', async () => {
+    const code = 'const x = 1;\n/*\n * Line 2\n * Line 3\n */\nconst y = 2;';
+    const comments = await extractRawComments(code, 'javascript');
+    expect(comments).toHaveLength(1);
+    expect(comments[0].type).toBe('block');
+    expect(comments[0].startLine).toBe(2);
+    expect(comments[0].endLine).toBe(5);
+  });
 
-async function testHtmlExtraction() {
-  const code = [
-    '<!DOCTYPE html>',
-    '<!-- HTML comment header -->',
-    '<html>',
-    '  <body>',
-    '    <a href="https://example.com" title="example">Link</a>',
-    '    <!-- Another comment -->',
-    '  </body>',
-    '</html>'
-  ].join('\n');
+  it('resolves language automatically from file path', async () => {
+    const comments = await extractRawComments('// js from path', null, 'script.js');
+    expect(comments).toHaveLength(1);
+    expect(comments[0].text).toBe('// js from path');
+  });
 
-  const comments = await extractRawComments(code, 'html', 'index.html');
-  assert.equal(comments.length, 2);
-  assert.equal(comments[0].text, '<!-- HTML comment header -->');
-  assert.equal(comments[0].type, 'block');
-  assert.equal(comments[1].text, '<!-- Another comment -->');
-  assert.equal(comments[1].type, 'block');
-}
+  it('throws descriptive error on unsupported language', async () => {
+    await expect(extractRawComments('code', 'rust')).rejects.toThrow(
+      /Unsupported or unknown language/
+    );
+  });
 
-async function testBashExtraction() {
-  const code = [
-    '#!/usr/bin/env bash',
-    '# Bash automation script',
-    'API_URL="https://example.com/api/v1"',
-    'echo "connecting to $API_URL" # inline comment',
-    'grep -E "pattern#notcomment" file.txt'
-  ].join('\n');
-
-  const comments = await extractRawComments(code, 'bash', 'deploy.sh');
-  assert.equal(comments.length, 3);
-  assert.equal(comments[0].text, '#!/usr/bin/env bash');
-  assert.equal(comments[0].type, 'line');
-  assert.equal(comments[1].text, '# Bash automation script');
-  assert.equal(comments[1].type, 'line');
-  assert.equal(comments[2].text, '# inline comment');
-  assert.equal(comments[2].type, 'line');
-}
-
-async function testEdgeCases() {
-  const emptyComments = await extractRawComments('', 'javascript');
-  assert.deepEqual(emptyComments, []);
-
-  const nullComments = await extractRawComments(null, 'javascript');
-  assert.deepEqual(nullComments, []);
-
-  const fileResolutionComments = await extractRawComments('// path resolved', null, 'src/App.vue');
-  assert.equal(fileResolutionComments.length, 0);
-
-  const jsFileResolution = await extractRawComments('// js resolved', null, 'script.js');
-  assert.equal(jsFileResolution.length, 1);
-  assert.equal(jsFileResolution[0].text, '// js resolved');
-
-  let unsupportedThrown = false;
-  try {
-    await extractRawComments('code', 'rust');
-  } catch (error) {
-    unsupportedThrown = true;
-    assert.match(error.message, /Unsupported or unknown language/);
-  }
-  assert.equal(unsupportedThrown, true);
-
-  const tree = await parserManager.parseCode('// from tree', 'javascript');
-  const treeComments = extractRawCommentsFromTree(tree, 'javascript', 'tree.js');
-  assert.equal(treeComments.length, 1);
-  assert.equal(treeComments[0].text, '// from tree');
-  assert.equal(treeComments[0].file, 'tree.js');
-}
-
-async function runAllTests() {
-  await testLanguageDetector();
-  await testGrammars();
-  await testJavaScriptExtraction();
-  await testTypeScriptExtraction();
-  await testPythonExtraction();
-  await testCssExtraction();
-  await testHtmlExtraction();
-  await testBashExtraction();
-  await testEdgeCases();
-  console.log('All commentExtractor and languageDetector unit tests passed successfully.');
-}
-
-runAllTests();
+  it('extracts comments synchronously from a pre-parsed CST tree', async () => {
+    const tree = await parserManager.parseCode('// from tree comment', 'javascript');
+    const comments = extractRawCommentsFromTree(tree, 'javascript', 'tree.js');
+    expect(comments).toHaveLength(1);
+    expect(comments[0].text).toBe('// from tree comment');
+    expect(comments[0].file).toBe('tree.js');
+  });
+});

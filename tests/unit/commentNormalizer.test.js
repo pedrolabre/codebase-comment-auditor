@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import {
   SUPPORTED_TAGS,
   detectTags,
@@ -17,239 +17,229 @@ import {
 } from '../../src/parsing/commentNormalizer.js';
 import { extractRawComments } from '../../src/parsing/commentExtractor.js';
 
-async function testTagDetector() {
-  assert.deepEqual(SUPPORTED_TAGS, ['TODO', 'FIXME', 'HACK', 'XXX', 'BUG', 'NOTE', 'TEMP']);
+describe('Tag Detector & URL Extractor', () => {
+  it('detects standard development tags and variants with colons or at-signs', () => {
+    expect(SUPPORTED_TAGS).toEqual(['TODO', 'FIXME', 'HACK', 'XXX', 'BUG', 'NOTE', 'TEMP']);
 
-  assert.deepEqual(detectTags('// TODO: fix bug https://github.com/issue/1'), ['TODO']);
-  assert.equal(hasTags('// TODO: fix bug https://github.com/issue/1'), true);
+    expect(detectTags('// TODO: fix bug https://github.com/issue/1')).toEqual(['TODO']);
+    expect(hasTags('// TODO: fix bug https://github.com/issue/1')).toBe(true);
 
-  assert.deepEqual(detectTags('// FIXME: solve memory leak'), ['FIXME']);
-  assert.deepEqual(detectTags('// HACK: bypass css flex issue'), ['HACK']);
-  assert.deepEqual(detectTags('// XXX: security risk'), ['XXX']);
-  assert.deepEqual(detectTags('// BUG: off-by-one error'), ['BUG']);
-  assert.deepEqual(detectTags('// NOTE: this is important'), ['NOTE']);
-  assert.deepEqual(detectTags('// TEMP: mock response for testing'), ['TEMP']);
+    expect(detectTags('// FIXME: solve memory leak')).toEqual(['FIXME']);
+    expect(detectTags('// HACK: bypass css flex issue')).toEqual(['HACK']);
+    expect(detectTags('// XXX: security risk')).toEqual(['XXX']);
+    expect(detectTags('// BUG: off-by-one error')).toEqual(['BUG']);
+    expect(detectTags('// NOTE: this is important')).toEqual(['NOTE']);
+    expect(detectTags('// TEMP: mock response for testing')).toEqual(['TEMP']);
 
-  assert.deepEqual(detectTags('// @todo refactor authentication module'), ['TODO']);
-  assert.deepEqual(detectTags('// todo: clean up state'), ['TODO']);
-  assert.deepEqual(detectTags('// fixme: edge case'), ['FIXME']);
-  assert.deepEqual(detectTags('// note: check permissions'), ['NOTE']);
-  assert.deepEqual(detectTags('// TODO(alice): handle timeout'), ['TODO']);
+    expect(detectTags('// @todo refactor authentication module')).toEqual(['TODO']);
+    expect(detectTags('// todo: clean up state')).toEqual(['TODO']);
+    expect(detectTags('// fixme: edge case')).toEqual(['FIXME']);
+    expect(detectTags('// note: check permissions')).toEqual(['NOTE']);
+    expect(detectTags('// TODO(alice): handle timeout')).toEqual(['TODO']);
+  });
 
-  assert.deepEqual(detectTags('// Please note that this function fixes a bug in parser'), []);
-  assert.equal(hasTags('// Please note that this function fixes a bug in parser'), false);
-  assert.deepEqual(detectTags('// We should bug the team about this'), []);
+  it('avoids false positives on natural language words in lowercase', () => {
+    expect(detectTags('// Please note that this function fixes a bug in parser')).toEqual([]);
+    expect(hasTags('// Please note that this function fixes a bug in parser')).toBe(false);
+    expect(detectTags('// We should bug the team about this')).toEqual([]);
+  });
 
-  assert.deepEqual(detectTags('// BUG in rendering engine and TODO for later'), ['BUG', 'TODO']);
-  assert.deepEqual(detectTags('// TODO: first TODO and second TODO'), ['TODO']);
+  it('deduplicates multiple tags and handles empty inputs', () => {
+    expect(detectTags('// BUG in rendering engine and TODO for later')).toEqual(['BUG', 'TODO']);
+    expect(detectTags('// TODO: first TODO and second TODO')).toEqual(['TODO']);
+    expect(detectTags('')).toEqual([]);
+    expect(detectTags(null)).toEqual([]);
+    expect(detectTags('   ')).toEqual([]);
+  });
 
-  assert.deepEqual(detectTags(''), []);
-  assert.deepEqual(detectTags(null), []);
-  assert.deepEqual(detectTags('   '), []);
-}
+  it('extracts valid web URLs with punctuation sanitization', () => {
+    const comment = '// TODO: fix bug https://github.com/issue/1';
+    expect(extractUrls(comment)).toEqual(['https://github.com/issue/1']);
+    expect(hasUrls(comment)).toBe(true);
 
-async function testUrlExtractor() {
-  const comment = '// TODO: fix bug https://github.com/issue/1';
-  assert.deepEqual(extractUrls(comment), ['https://github.com/issue/1']);
-  assert.equal(hasUrls(comment), true);
+    expect(extractUrls('// See documentation at https://example.com/docs.')).toEqual([
+      'https://example.com/docs'
+    ]);
+    expect(extractUrls('// Reference: (https://example.com/spec)')).toEqual(['https://example.com/spec']);
+    expect(extractUrls('// Endpoints: http://localhost:8080/v1, http://localhost:8080/v2;')).toEqual([
+      'http://localhost:8080/v1',
+      'http://localhost:8080/v2'
+    ]);
+    expect(
+      extractUrls('// Link with query: https://example.com/search?q=test&lang=en#results')
+    ).toEqual(['https://example.com/search?q=test&lang=en#results']);
+    expect(extractUrls('// Duplicate https://site.org and https://site.org')).toEqual([
+      'https://site.org'
+    ]);
+    expect(extractUrls('// No URLs here')).toEqual([]);
+    expect(hasUrls('// No URLs here')).toBe(false);
+    expect(extractUrls('')).toEqual([]);
+    expect(extractUrls(null)).toEqual([]);
+  });
+});
 
-  assert.deepEqual(extractUrls('// See documentation at https://example.com/docs.'), ['https://example.com/docs']);
-  assert.deepEqual(extractUrls('// Reference: (https://example.com/spec)'), ['https://example.com/spec']);
-  assert.deepEqual(extractUrls('// Endpoints: http://localhost:8080/v1, http://localhost:8080/v2;'), [
-    'http://localhost:8080/v1',
-    'http://localhost:8080/v2'
-  ]);
-  assert.deepEqual(extractUrls('// Link with query: https://example.com/search?q=test&lang=en#results'), [
-    'https://example.com/search?q=test&lang=en#results'
-  ]);
-  assert.deepEqual(extractUrls('// Duplicate https://site.org and https://site.org'), ['https://site.org']);
+describe('Comment Normalizer Helpers', () => {
+  it('strips comment delimiters cleanly across languages', () => {
+    expect(stripCommentDelimiters('// Line comment')).toBe('Line comment');
+    expect(stripCommentDelimiters('/// <reference types="vite/client" />')).toBe(
+      '<reference types="vite/client" />'
+    );
+    expect(stripCommentDelimiters('# Python comment')).toBe('Python comment');
+    expect(stripCommentDelimiters('#!/usr/bin/env bash')).toBe('/usr/bin/env bash');
+    expect(stripCommentDelimiters('/* Block comment */', 'block')).toBe('Block comment');
+    expect(stripCommentDelimiters('<!-- HTML comment header -->', 'block')).toBe('HTML comment header');
 
-  assert.deepEqual(extractUrls('// No URLs here'), []);
-  assert.equal(hasUrls('// No URLs here'), false);
-  assert.deepEqual(extractUrls(''), []);
-  assert.deepEqual(extractUrls(null), []);
-}
+    const jsDocSample = [
+      '/**',
+      ' * Description line 1',
+      ' * Description line 2',
+      ' * @param {string} x',
+      ' */'
+    ].join('\n');
+    expect(stripCommentDelimiters(jsDocSample, 'docstring', 'javascript')).toBe(
+      'Description line 1\nDescription line 2\n@param {string} x'
+    );
 
-async function testDelimiterStripping() {
-  assert.equal(stripCommentDelimiters('// Line comment'), 'Line comment');
-  assert.equal(stripCommentDelimiters('/// <reference types="vite/client" />'), '<reference types="vite/client" />');
-  assert.equal(stripCommentDelimiters('# Python comment'), 'Python comment');
-  assert.equal(stripCommentDelimiters('#!/usr/bin/env bash'), '/usr/bin/env bash');
-  assert.equal(stripCommentDelimiters('/* Block comment */', 'block'), 'Block comment');
-  assert.equal(stripCommentDelimiters('<!-- HTML comment header -->', 'block'), 'HTML comment header');
+    expect(
+      stripCommentDelimiters('"""Module docstring for test module."""', 'docstring', 'python')
+    ).toBe('Module docstring for test module.');
+    expect(
+      stripCommentDelimiters("'''Single triple quote docstring'''", 'docstring', 'python')
+    ).toBe('Single triple quote docstring');
+    expect(
+      stripCommentDelimiters('r"""Raw docstring test"""', 'docstring', 'python')
+    ).toBe('Raw docstring test');
 
-  const jsDocSample = [
-    '/**',
-    ' * Description line 1',
-    ' * Description line 2',
-    ' * @param {string} x',
-    ' */'
-  ].join('\n');
-  assert.equal(
-    stripCommentDelimiters(jsDocSample, 'docstring', 'javascript'),
-    'Description line 1\nDescription line 2\n@param {string} x'
-  );
+    expect(stripCommentDelimiters('')).toBe('');
+    expect(stripCommentDelimiters(null)).toBe('');
+  });
 
-  assert.equal(
-    stripCommentDelimiters('"""Module docstring for test module."""', 'docstring', 'python'),
-    'Module docstring for test module.'
-  );
-  assert.equal(
-    stripCommentDelimiters("'''Single triple quote docstring'''", 'docstring', 'python'),
-    'Single triple quote docstring'
-  );
-  assert.equal(
-    stripCommentDelimiters('r"""Raw docstring test"""', 'docstring', 'python'),
-    'Raw docstring test'
-  );
+  it('creates deterministic comment IDs and maps categories', () => {
+    expect(createCommentId('src/App.vue', 10, 5)).toBe('src/App.vue:10:5');
+    expect(createCommentId('', 1, 1)).toBe(':1:1');
+    expect(createCommentId(null, null, null)).toBe(':0:0');
 
-  assert.equal(stripCommentDelimiters(''), '');
-  assert.equal(stripCommentDelimiters(null), '');
-}
+    expect(getCommentCategory('docstring')).toBe('documentation');
+    expect(getCommentCategory('line')).toBe('development');
+    expect(getCommentCategory('block')).toBe('development');
+  });
 
-async function testCommentIdAndCategory() {
-  assert.equal(createCommentId('src/App.vue', 10, 5), 'src/App.vue:10:5');
-  assert.equal(createCommentId('', 1, 1), ':1:1');
-  assert.equal(createCommentId(null, null, null), ':0:0');
+  it('slices surrounding code context up to 2 lines before and after', () => {
+    const code = ['line 1', 'line 2', 'line 3', 'line 4', 'line 5'].join('\n');
 
-  assert.equal(getCommentCategory('docstring'), 'documentation');
-  assert.equal(getCommentCategory('line'), 'development');
-  assert.equal(getCommentCategory('block'), 'development');
-}
+    const first = extractCommentContext(code, 1, 1);
+    expect(first.before).toEqual([]);
+    expect(first.target).toEqual(['line 1']);
+    expect(first.after).toEqual(['line 2', 'line 3']);
 
-async function testContextExtraction() {
-  const code = [
-    'line 1',
-    'line 2',
-    'line 3',
-    'line 4',
-    'line 5'
-  ].join('\n');
+    const second = extractCommentContext(code, 2, 2);
+    expect(second.before).toEqual(['line 1']);
+    expect(second.target).toEqual(['line 2']);
+    expect(second.after).toEqual(['line 3', 'line 4']);
 
-  const firstLineContext = extractCommentContext(code, 1, 1);
-  assert.deepEqual(firstLineContext.before, []);
-  assert.deepEqual(firstLineContext.target, ['line 1']);
-  assert.deepEqual(firstLineContext.after, ['line 2', 'line 3']);
+    const middle = extractCommentContext(code, 3, 4);
+    expect(middle.before).toEqual(['line 1', 'line 2']);
+    expect(middle.target).toEqual(['line 3', 'line 4']);
+    expect(middle.after).toEqual(['line 5']);
 
-  const secondLineContext = extractCommentContext(code, 2, 2);
-  assert.deepEqual(secondLineContext.before, ['line 1']);
-  assert.deepEqual(secondLineContext.target, ['line 2']);
-  assert.deepEqual(secondLineContext.after, ['line 3', 'line 4']);
+    const last = extractCommentContext(code, 5, 5);
+    expect(last.before).toEqual(['line 3', 'line 4']);
+    expect(last.target).toEqual(['line 5']);
+    expect(last.after).toEqual([]);
 
-  const middleMultiLineContext = extractCommentContext(code, 3, 4);
-  assert.deepEqual(middleMultiLineContext.before, ['line 1', 'line 2']);
-  assert.deepEqual(middleMultiLineContext.target, ['line 3', 'line 4']);
-  assert.deepEqual(middleMultiLineContext.after, ['line 5']);
+    const empty = extractCommentContext('', 1, 1);
+    expect(empty.before).toEqual([]);
+    expect(empty.target).toEqual([]);
+    expect(empty.after).toEqual([]);
 
-  const lastLineContext = extractCommentContext(code, 5, 5);
-  assert.deepEqual(lastLineContext.before, ['line 3', 'line 4']);
-  assert.deepEqual(lastLineContext.target, ['line 5']);
-  assert.deepEqual(lastLineContext.after, []);
+    const fromLines = extractCommentContextFromLines(['a', 'b', 'c'], 2, 2);
+    expect(fromLines.before).toEqual(['a']);
+    expect(fromLines.target).toEqual(['b']);
+    expect(fromLines.after).toEqual(['c']);
+  });
+});
 
-  const emptyContext = extractCommentContext('', 1, 1);
-  assert.deepEqual(emptyContext.before, []);
-  assert.deepEqual(emptyContext.target, []);
-  assert.deepEqual(emptyContext.after, []);
+describe('Canonical CommentNode Normalization', () => {
+  it('normalizes comment according to the mandatory specification scenario', () => {
+    const sourceCode = [
+      'import config from "./config.js";',
+      '// TODO: fix bug https://github.com/issue/1',
+      'export function run() {',
+      '  return config.url;',
+      '}'
+    ].join('\n');
 
-  const linesArray = ['a', 'b', 'c'];
-  const fromLines = extractCommentContextFromLines(linesArray, 2, 2);
-  assert.deepEqual(fromLines.before, ['a']);
-  assert.deepEqual(fromLines.target, ['b']);
-  assert.deepEqual(fromLines.after, ['c']);
-}
+    const rawComment = {
+      text: '// TODO: fix bug https://github.com/issue/1',
+      type: 'line',
+      language: 'javascript',
+      file: 'src/runner.js',
+      startLine: 2,
+      endLine: 2,
+      startColumn: 1,
+      endColumn: 44,
+      startIndex: 34,
+      endIndex: 77
+    };
 
-async function testMandatoryPromptNormalization() {
-  const sourceCode = [
-    'import config from "./config.js";',
-    '// TODO: fix bug https://github.com/issue/1',
-    'export function run() {',
-    '  return config.url;',
-    '}'
-  ].join('\n');
+    const normalized = normalizeCommentNode(rawComment, sourceCode);
 
-  const rawComment = {
-    text: '// TODO: fix bug https://github.com/issue/1',
-    type: 'line',
-    language: 'javascript',
-    file: 'src/runner.js',
-    startLine: 2,
-    endLine: 2,
-    startColumn: 1,
-    endColumn: 44,
-    startIndex: 34,
-    endIndex: 77
-  };
+    expect(normalized.id).toBe('src/runner.js:2:1');
+    expect(normalized.file).toBe('src/runner.js');
+    expect(normalized.language).toBe('javascript');
+    expect(normalized.type).toBe('line');
+    expect(normalized.category).toBe('development');
+    expect(normalized.startLine).toBe(2);
+    expect(normalized.endLine).toBe(2);
+    expect(normalized.startColumn).toBe(1);
+    expect(normalized.endColumn).toBe(44);
+    expect(normalized.text).toBe('// TODO: fix bug https://github.com/issue/1');
+    expect(normalized.content).toBe('TODO: fix bug https://github.com/issue/1');
+    expect(normalized.tags).toEqual(['TODO']);
+    expect(normalized.hasUrl).toBe(true);
+    expect(normalized.urls).toEqual(['https://github.com/issue/1']);
+    expect(normalized.isAdded).toBe(false);
 
-  const normalized = normalizeCommentNode(rawComment, sourceCode);
+    expect(normalized.context.before).toEqual(['import config from "./config.js";']);
+    expect(normalized.context.target).toEqual(['// TODO: fix bug https://github.com/issue/1']);
+    expect(normalized.context.after).toEqual(['export function run() {', '  return config.url;']);
+  });
 
-  assert.equal(normalized.id, 'src/runner.js:2:1');
-  assert.equal(normalized.file, 'src/runner.js');
-  assert.equal(normalized.language, 'javascript');
-  assert.equal(normalized.type, 'line');
-  assert.equal(normalized.category, 'development');
-  assert.equal(normalized.startLine, 2);
-  assert.equal(normalized.endLine, 2);
-  assert.equal(normalized.startColumn, 1);
-  assert.equal(normalized.endColumn, 44);
-  assert.equal(normalized.text, '// TODO: fix bug https://github.com/issue/1');
-  assert.equal(normalized.content, 'TODO: fix bug https://github.com/issue/1');
-  assert.deepEqual(normalized.tags, ['TODO']);
-  assert.equal(normalized.hasUrl, true);
-  assert.deepEqual(normalized.urls, ['https://github.com/issue/1']);
-  assert.equal(normalized.isAdded, false);
+  it('normalizes batches of comments with mixed types and docstrings', async () => {
+    const pythonCode = [
+      '# Script header',
+      '"""Module docstring describing this tool."""',
+      'def execute():',
+      '    # FIXME: check status https://service.local/health',
+      '    pass'
+    ].join('\n');
 
-  assert.deepEqual(normalized.context.before, ['import config from "./config.js";']);
-  assert.deepEqual(normalized.context.target, ['// TODO: fix bug https://github.com/issue/1']);
-  assert.deepEqual(normalized.context.after, ['export function run() {', '  return config.url;']);
-}
+    const rawList = await extractRawComments(pythonCode, 'python', 'script.py');
+    expect(rawList).toHaveLength(3);
 
-async function testBatchNormalizationAndDocstrings() {
-  const pythonCode = [
-    '# Script header',
-    '"""Module docstring describing this tool."""',
-    'def execute():',
-    '    # FIXME: check status https://service.local/health',
-    '    pass'
-  ].join('\n');
+    const normalizedList = normalizeCommentNodes(rawList, pythonCode);
+    expect(normalizedList).toHaveLength(3);
 
-  const rawList = await extractRawComments(pythonCode, 'python', 'script.py');
-  assert.equal(rawList.length, 3);
+    expect(normalizedList[0].type).toBe('line');
+    expect(normalizedList[0].category).toBe('development');
+    expect(normalizedList[0].content).toBe('Script header');
+    expect(normalizedList[0].tags).toEqual([]);
+    expect(normalizedList[0].hasUrl).toBe(false);
 
-  const normalizedList = normalizeCommentNodes(rawList, pythonCode);
-  assert.equal(normalizedList.length, 3);
+    expect(normalizedList[1].type).toBe('docstring');
+    expect(normalizedList[1].category).toBe('documentation');
+    expect(normalizedList[1].content).toBe('Module docstring describing this tool.');
+    expect(normalizedList[1].tags).toEqual([]);
 
-  assert.equal(normalizedList[0].type, 'line');
-  assert.equal(normalizedList[0].category, 'development');
-  assert.equal(normalizedList[0].content, 'Script header');
-  assert.deepEqual(normalizedList[0].tags, []);
-  assert.equal(normalizedList[0].hasUrl, false);
+    expect(normalizedList[2].type).toBe('line');
+    expect(normalizedList[2].category).toBe('development');
+    expect(normalizedList[2].tags).toEqual(['FIXME']);
+    expect(normalizedList[2].hasUrl).toBe(true);
+    expect(normalizedList[2].urls).toEqual(['https://service.local/health']);
+    expect(normalizedList[2].context.before).toHaveLength(2);
+    expect(normalizedList[2].context.after).toHaveLength(1);
 
-  assert.equal(normalizedList[1].type, 'docstring');
-  assert.equal(normalizedList[1].category, 'documentation');
-  assert.equal(normalizedList[1].content, 'Module docstring describing this tool.');
-  assert.deepEqual(normalizedList[1].tags, []);
-
-  assert.equal(normalizedList[2].type, 'line');
-  assert.equal(normalizedList[2].category, 'development');
-  assert.deepEqual(normalizedList[2].tags, ['FIXME']);
-  assert.equal(normalizedList[2].hasUrl, true);
-  assert.deepEqual(normalizedList[2].urls, ['https://service.local/health']);
-  assert.equal(normalizedList[2].context.before.length, 2);
-  assert.equal(normalizedList[2].context.after.length, 1);
-
-  assert.deepEqual(normalizeCommentNodes([]), []);
-  assert.deepEqual(normalizeCommentNodes(null), []);
-}
-
-async function runAllTests() {
-  await testTagDetector();
-  await testUrlExtractor();
-  await testDelimiterStripping();
-  await testCommentIdAndCategory();
-  await testContextExtraction();
-  await testMandatoryPromptNormalization();
-  await testBatchNormalizationAndDocstrings();
-  console.log('All commentNormalizer and tagDetector unit tests passed successfully.');
-}
-
-runAllTests();
+    expect(normalizeCommentNodes([])).toEqual([]);
+    expect(normalizeCommentNodes(null)).toEqual([]);
+  });
+});

@@ -1,76 +1,96 @@
-import assert from 'node:assert/strict';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { parserManager, ParserManager } from '../../src/parsing/parserManager.js';
 
-async function runTests() {
-  const customManager = new ParserManager();
-  assert.equal(customManager.parser, null);
-  assert.equal(customManager.hasLanguage('javascript'), false);
+describe('ParserManager', () => {
+  let customManager;
 
-  await customManager.initParser();
-  assert.notEqual(customManager.parser, null);
+  beforeEach(() => {
+    customManager = new ParserManager();
+  });
 
-  const jsTree = await customManager.parseCode('const x = 10; // comment', 'javascript');
-  assert.ok(jsTree);
-  assert.equal(jsTree.rootNode.type, 'program');
-  assert.equal(jsTree.rootNode.childCount, 2);
-  assert.equal(jsTree.rootNode.children[0].type, 'lexical_declaration');
-  assert.equal(jsTree.rootNode.children[1].type, 'comment');
-  assert.equal(customManager.hasLanguage('javascript'), true);
+  it('starts uninitialized without loaded languages', () => {
+    expect(customManager.parser).toBeNull();
+    expect(customManager.hasLanguage('javascript')).toBe(false);
+  });
 
-  const tsTree = await customManager.parseCode('const greeting: string = "hello";', 'typescript');
-  assert.equal(tsTree.rootNode.type, 'program');
+  it('initializes web-tree-sitter parser runtime successfully', async () => {
+    await customManager.initParser();
+    expect(customManager.parser).not.toBeNull();
+  });
 
-  const pyTree = await customManager.parseCode('def calculate(total):\n    return total * 2', 'python');
-  assert.equal(pyTree.rootNode.type, 'module');
+  it('parses JavaScript source code and populates language cache', async () => {
+    const tree = await customManager.parseCode('const x = 10; // comment', 'javascript');
+    expect(tree).toBeDefined();
+    expect(tree.rootNode.type).toBe('program');
+    expect(tree.rootNode.childCount).toBe(2);
+    expect(tree.rootNode.children[0].type).toBe('lexical_declaration');
+    expect(tree.rootNode.children[1].type).toBe('comment');
+    expect(customManager.hasLanguage('javascript')).toBe(true);
+  });
 
-  const cssTree = await customManager.parseCode('body { margin: 0; padding: 0; }', 'css');
-  assert.equal(cssTree.rootNode.type, 'stylesheet');
+  it('parses TypeScript, Python, CSS, HTML and Bash', async () => {
+    const tsTree = await customManager.parseCode('const greeting: string = "hello";', 'typescript');
+    expect(tsTree.rootNode.type).toBe('program');
 
-  const htmlTree = await customManager.parseCode('<main id="app"><p>Auditor</p></main>', 'html');
-  assert.equal(htmlTree.rootNode.type, 'document');
+    const pyTree = await customManager.parseCode('def calculate(total):\n    return total * 2', 'python');
+    expect(pyTree.rootNode.type).toBe('module');
 
-  const bashTree = await customManager.parseCode('git status --short', 'bash');
-  assert.equal(bashTree.rootNode.type, 'program');
+    const cssTree = await customManager.parseCode('body { margin: 0; padding: 0; }', 'css');
+    expect(cssTree.rootNode.type).toBe('stylesheet');
 
-  const aliasJsTree = await customManager.parseCode('let y = 20;', 'js');
-  assert.equal(aliasJsTree.rootNode.type, 'program');
+    const htmlTree = await customManager.parseCode('<main id="app"><p>Auditor</p></main>', 'html');
+    expect(htmlTree.rootNode.type).toBe('document');
 
-  const aliasTsTree = await customManager.parseCode('type ID = string;', 'ts');
-  assert.equal(aliasTsTree.rootNode.type, 'program');
+    const bashTree = await customManager.parseCode('git status --short', 'bash');
+    expect(bashTree.rootNode.type).toBe('program');
+  });
 
-  const aliasPyTree = await customManager.parseCode('import sys', 'py');
-  assert.equal(aliasPyTree.rootNode.type, 'module');
+  it('normalizes language aliases correctly', async () => {
+    const jsTree = await customManager.parseCode('let y = 20;', 'js');
+    expect(jsTree.rootNode.type).toBe('program');
 
-  const aliasShTree = await customManager.parseCode('echo "done"', 'sh');
-  assert.equal(aliasShTree.rootNode.type, 'program');
+    const tsTree = await customManager.parseCode('type ID = string;', 'ts');
+    expect(tsTree.rootNode.type).toBe('program');
 
-  const emptyTree = await customManager.parseCode('', 'javascript');
-  assert.equal(emptyTree.rootNode.type, 'program');
-  assert.equal(emptyTree.rootNode.childCount, 0);
+    const pyTree = await customManager.parseCode('import sys', 'py');
+    expect(pyTree.rootNode.type).toBe('module');
 
-  let unsupportedThrown = false;
-  try {
-    await customManager.parseCode('fn main() {}', 'unsupported_lang');
-  } catch (error) {
-    unsupportedThrown = true;
-    assert.match(error.message, /Unsupported language/);
-  }
-  assert.equal(unsupportedThrown, true);
+    const bashTree = await customManager.parseCode('echo "done"', 'sh');
+    expect(bashTree.rootNode.type).toBe('program');
+  });
 
-  const supported = customManager.getSupportedLanguages();
-  assert.deepEqual(supported, ['javascript', 'typescript', 'python', 'css', 'html', 'bash']);
-  assert.equal(customManager.isLanguageSupported('javascript'), true);
-  assert.equal(customManager.isLanguageSupported('python'), true);
-  assert.equal(customManager.isLanguageSupported('rust'), false);
+  it('handles empty code input gracefully', async () => {
+    const emptyTree = await customManager.parseCode('', 'javascript');
+    expect(emptyTree.rootNode.type).toBe('program');
+    expect(emptyTree.rootNode.childCount).toBe(0);
+  });
 
-  const singletonTree = await parserManager.parseCode('const x = 10; // comment', 'javascript');
-  assert.ok(singletonTree);
-  assert.equal(singletonTree.rootNode.type, 'program');
-  assert.equal(singletonTree.rootNode.childCount, 2);
-  assert.equal(singletonTree.rootNode.children[0].type, 'lexical_declaration');
-  assert.equal(singletonTree.rootNode.children[1].type, 'comment');
+  it('throws descriptive error on unsupported language', async () => {
+    await expect(customManager.parseCode('fn main() {}', 'unsupported_lang')).rejects.toThrow(
+      /Unsupported language/
+    );
+  });
 
-  console.log('All parserManager unit tests passed successfully.');
-}
+  it('provides list and predicates of supported languages', () => {
+    expect(customManager.getSupportedLanguages()).toEqual([
+      'javascript',
+      'typescript',
+      'python',
+      'css',
+      'html',
+      'bash'
+    ]);
+    expect(customManager.isLanguageSupported('javascript')).toBe(true);
+    expect(customManager.isLanguageSupported('python')).toBe(true);
+    expect(customManager.isLanguageSupported('rust')).toBe(false);
+  });
 
-runTests();
+  it('works with exported singleton parserManager instance', async () => {
+    const tree = await parserManager.parseCode('const x = 10; // comment', 'javascript');
+    expect(tree).toBeDefined();
+    expect(tree.rootNode.type).toBe('program');
+    expect(tree.rootNode.childCount).toBe(2);
+    expect(tree.rootNode.children[0].type).toBe('lexical_declaration');
+    expect(tree.rootNode.children[1].type).toBe('comment');
+  });
+});
