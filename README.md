@@ -32,6 +32,7 @@ codebase-comment-auditor/
 │   ├── parsing/
 │   │   ├── commentExtractor.js
 │   │   ├── commentNormalizer.js
+│   │   ├── diffCommentExtractor.js
 │   │   ├── grammars.js
 │   │   ├── languageDetector.js
 │   │   └── parserManager.js
@@ -45,6 +46,7 @@ codebase-comment-auditor/
 │   └── unit/
 │       ├── commentExtractor.test.js
 │       ├── commentNormalizer.test.js
+│       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
 │       └── parserManager.test.js
 └── vite.config.js
