@@ -26,8 +26,11 @@ codebase-comment-auditor/
 ├── src/
 │   ├── App.vue
 │   ├── components/
+│   │   ├── DiffInput.vue
 │   │   ├── ModeSelector.vue
 │   │   └── Navbar.vue
+│   ├── composables/
+│   │   └── useAuditState.js
 │   ├── main.js
 │   ├── parsing/
 │   │   ├── commentExtractor.js
@@ -48,6 +51,7 @@ codebase-comment-auditor/
 │       ├── commentNormalizer.test.js
 │       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
-│       └── parserManager.test.js
+│       ├── parserManager.test.js
+│       └── useAuditState.test.js
 └── vite.config.js
 ```
