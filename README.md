@@ -40,7 +40,9 @@ codebase-comment-auditor/
 │   │   ├── languageDetector.js
 │   │   └── parserManager.js
 │   ├── services/
-│   │   └── diffParserService.js
+│   │   ├── diffParserService.js
+│   │   ├── githubService.js
+│   │   └── zipService.js
 │   ├── style.css
 │   └── utils/
 │       └── tagDetector.js
@@ -51,7 +53,9 @@ codebase-comment-auditor/
 │       ├── commentNormalizer.test.js
 │       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
+│       ├── githubService.test.js
 │       ├── parserManager.test.js
-│       └── useAuditState.test.js
+│       ├── useAuditState.test.js
+│       └── zipService.test.js
 └── vite.config.js
 ```
