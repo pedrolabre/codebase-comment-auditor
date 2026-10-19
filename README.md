@@ -26,11 +26,13 @@ codebase-comment-auditor/
 ├── src/
 │   ├── App.vue
 │   ├── components/
+│   │   ├── AuditProgressBar.vue
 │   │   ├── DiffInput.vue
 │   │   ├── ModeSelector.vue
 │   │   └── Navbar.vue
 │   ├── composables/
-│   │   └── useAuditState.js
+│   │   ├── useAuditState.js
+│   │   └── useGitHubLoader.js
 │   ├── main.js
 │   ├── parsing/
 │   │   ├── commentExtractor.js
@@ -45,6 +47,7 @@ codebase-comment-auditor/
 │   │   └── zipService.js
 │   ├── style.css
 │   └── utils/
+│       ├── fileIgnoreRules.js
 │       └── tagDetector.js
 ├── tailwind.config.js
 ├── tests/
@@ -53,9 +56,11 @@ codebase-comment-auditor/
 │       ├── commentNormalizer.test.js
 │       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
+│       ├── fileIgnoreRules.test.js
 │       ├── githubService.test.js
 │       ├── parserManager.test.js
 │       ├── useAuditState.test.js
+│       ├── useGitHubLoader.test.js
 │       └── zipService.test.js
 └── vite.config.js
 ```
