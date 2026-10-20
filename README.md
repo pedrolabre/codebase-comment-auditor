@@ -27,7 +27,10 @@ codebase-comment-auditor/
 │   ├── App.vue
 │   ├── components/
 │   │   ├── AuditProgressBar.vue
+│   │   ├── CodeContextViewer.vue
+│   │   ├── CommentCard.vue
 │   │   ├── DiffInput.vue
+│   │   ├── ExportModal.vue
 │   │   ├── FilterToolbar.vue
 │   │   ├── MetricsSummary.vue
 │   │   ├── ModeSelector.vue
@@ -57,10 +60,13 @@ codebase-comment-auditor/
 ├── tailwind.config.js
 ├── tests/
 │   └── unit/
+│       ├── CodeContextViewer.test.js
+│       ├── CommentCard.test.js
 │       ├── commentExtractor.test.js
 │       ├── commentNormalizer.test.js
 │       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
+│       ├── ExportModal.test.js
 │       ├── fileIgnoreRules.test.js
 │       ├── FilterToolbar.test.js
 │       ├── githubService.test.js

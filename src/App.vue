@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { CheckCircle2, FileCode, Tag, Search, RotateCcw } from 'lucide-vue-next';
+import { CheckCircle2, FileCode, Search, RotateCcw, Download } from 'lucide-vue-next';
 import Navbar from './components/Navbar.vue';
 import ModeSelector from './components/ModeSelector.vue';
 import DiffInput from './components/DiffInput.vue';
@@ -9,6 +9,8 @@ import AuditProgressBar from './components/AuditProgressBar.vue';
 import MetricsSummary from './components/MetricsSummary.vue';
 import FilterToolbar from './components/FilterToolbar.vue';
 import SkippedFilesModal from './components/SkippedFilesModal.vue';
+import CommentCard from './components/CommentCard.vue';
+import ExportModal from './components/ExportModal.vue';
 import { useAuditState } from './composables/useAuditState.js';
 import { useGitHubLoader } from './composables/useGitHubLoader.js';
 import { useCommentFilter } from './composables/useCommentFilter.js';
@@ -27,6 +29,7 @@ const commentFilter = useCommentFilter(comments);
 const { filteredComments, hasActiveFilters, resetFilters } = commentFilter;
 
 const isSkippedModalOpen = ref(false);
+const isExportModalOpen = ref(false);
 
 const isRepoAudited = computed(() => {
   return hasAudited.value && (loader.status.value === 'done' || repoMetrics.value.totalFiles > 0);
@@ -43,6 +46,19 @@ const showProgressBar = computed(() => {
 const filteredAffectedFilesCount = computed(() => {
   const set = new Set(filteredComments.value.map((c) => c.file));
   return set.size;
+});
+
+const exportMetrics = computed(() => {
+  if (activeMode.value === 'repo') {
+    return {
+      totalFiles: repoMetrics.value.totalFiles,
+      supportedFiles: repoMetrics.value.supportedFiles,
+      skippedFilesCount: repoMetrics.value.skippedFiles?.length || 0
+    };
+  }
+  return {
+    affectedFilesCount: affectedFiles.value?.length || 0
+  };
 });
 </script>
 
@@ -151,42 +167,33 @@ const filteredAffectedFilesCount = computed(() => {
                   </div>
 
                   <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                        <FileCode class="w-4 h-4 text-emerald-400" />
-                        Preview dos Comentários Detectados ({{ filteredComments.length }})
-                      </h3>
-                      <span class="text-xs font-mono text-slate-400">
-                        {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
-                      </span>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                      <div class="flex items-center gap-3">
+                        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                          <FileCode class="w-4 h-4 text-emerald-400" />
+                          Comentários Detectados ({{ filteredComments.length }})
+                        </h3>
+                        <span class="text-xs font-mono text-slate-400">
+                          {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition shadow"
+                        @click="isExportModalOpen = true"
+                      >
+                        <Download class="w-3.5 h-3.5" />
+                        Exportar Relatório
+                      </button>
                     </div>
 
-                    <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
-                      <div
+                    <div class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                      <CommentCard
                         v-for="comment in filteredComments"
                         :key="comment.id"
-                        class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
-                      >
-                        <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
-                          <span class="text-emerald-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
-                          <div class="flex items-center gap-1.5">
-                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
-                              {{ comment.language }}
-                            </span>
-                            <span
-                              v-for="tag in comment.tags"
-                              :key="tag"
-                              class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
-                            >
-                              <Tag class="w-2.5 h-2.5" />
-                              {{ tag }}
-                            </span>
-                          </div>
-                        </div>
-                        <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
-                          {{ comment.text }}
-                        </p>
-                      </div>
+                        :comment="comment"
+                      />
                     </div>
                   </div>
                 </div>
@@ -254,42 +261,33 @@ const filteredAffectedFilesCount = computed(() => {
                   </div>
 
                   <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                        <FileCode class="w-4 h-4 text-cyan-400" />
-                        Preview dos Comentários Adicionados ({{ filteredComments.length }})
-                      </h3>
-                      <span class="text-xs font-mono text-slate-400">
-                        {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
-                      </span>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                      <div class="flex items-center gap-3">
+                        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                          <FileCode class="w-4 h-4 text-cyan-400" />
+                          Comentários Adicionados ({{ filteredComments.length }})
+                        </h3>
+                        <span class="text-xs font-mono text-slate-400">
+                          {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition shadow"
+                        @click="isExportModalOpen = true"
+                      >
+                        <Download class="w-3.5 h-3.5" />
+                        Exportar Relatório
+                      </button>
                     </div>
 
-                    <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
-                      <div
+                    <div class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                      <CommentCard
                         v-for="comment in filteredComments"
                         :key="comment.id"
-                        class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
-                      >
-                        <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
-                          <span class="text-cyan-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
-                          <div class="flex items-center gap-1.5">
-                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
-                              {{ comment.language }}
-                            </span>
-                            <span
-                              v-for="tag in comment.tags"
-                              :key="tag"
-                              class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
-                            >
-                              <Tag class="w-2.5 h-2.5" />
-                              {{ tag }}
-                            </span>
-                          </div>
-                        </div>
-                        <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
-                          {{ comment.text }}
-                        </p>
-                      </div>
+                        :comment="comment"
+                      />
                     </div>
                   </div>
                 </div>
@@ -300,6 +298,12 @@ const filteredAffectedFilesCount = computed(() => {
       </section>
 
       <SkippedFilesModal v-model="isSkippedModalOpen" />
+      <ExportModal
+        v-model="isExportModalOpen"
+        :comments="filteredComments"
+        :metrics="exportMetrics"
+        :active-mode="activeMode"
+      />
     </main>
 
     <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
