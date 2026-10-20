@@ -1,11 +1,13 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { CheckCircle2, FileCode, Tag } from 'lucide-vue-next';
 import Navbar from './components/Navbar.vue';
 import ModeSelector from './components/ModeSelector.vue';
 import DiffInput from './components/DiffInput.vue';
 import RepositoryInput from './components/RepositoryInput.vue';
 import AuditProgressBar from './components/AuditProgressBar.vue';
+import MetricsSummary from './components/MetricsSummary.vue';
+import SkippedFilesModal from './components/SkippedFilesModal.vue';
 import { useAuditState } from './composables/useAuditState.js';
 import { useGitHubLoader } from './composables/useGitHubLoader.js';
 
@@ -19,6 +21,7 @@ const {
 } = useAuditState();
 
 const loader = useGitHubLoader();
+const isSkippedModalOpen = ref(false);
 
 const isRepoAudited = computed(() => {
   return hasAudited.value && (loader.status.value === 'done' || repoMetrics.value.totalFiles > 0);
@@ -92,29 +95,7 @@ const showProgressBar = computed(() => {
               leave-to-class="opacity-0 translate-y-2"
             >
               <div v-if="isRepoAudited && !loader.isLoading.value" class="space-y-6">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Arquivos</span>
-                    <span class="text-2xl font-bold font-mono text-white">{{ repoMetrics.totalFiles }}</span>
-                  </div>
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Auditados</span>
-                    <span class="text-2xl font-bold font-mono text-emerald-400">{{ repoMetrics.supportedFiles }}</span>
-                  </div>
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pulados</span>
-                    <span class="text-2xl font-bold font-mono text-slate-400">{{ repoMetrics.skippedFiles?.length || 0 }}</span>
-                  </div>
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Comentários</span>
-                    <span
-                      class="text-2xl font-bold font-mono"
-                      :class="totalCommentsCount > 0 ? 'text-amber-400' : 'text-emerald-400'"
-                    >
-                      {{ totalCommentsCount }}
-                    </span>
-                  </div>
-                </div>
+                <MetricsSummary @open-skipped="isSkippedModalOpen = true" />
 
                 <div
                   v-if="totalCommentsCount === 0"
@@ -181,6 +162,8 @@ const showProgressBar = computed(() => {
           </div>
         </transition>
       </section>
+
+      <SkippedFilesModal v-model="isSkippedModalOpen" />
     </main>
 
     <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
