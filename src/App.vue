@@ -1,11 +1,32 @@
 <script setup>
-import { FolderGit2, Sparkles } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { CheckCircle2, FileCode, Tag } from 'lucide-vue-next';
 import Navbar from './components/Navbar.vue';
 import ModeSelector from './components/ModeSelector.vue';
 import DiffInput from './components/DiffInput.vue';
+import RepositoryInput from './components/RepositoryInput.vue';
+import AuditProgressBar from './components/AuditProgressBar.vue';
 import { useAuditState } from './composables/useAuditState.js';
+import { useGitHubLoader } from './composables/useGitHubLoader.js';
 
-const { activeMode } = useAuditState();
+const {
+  activeMode,
+  comments,
+  affectedFiles,
+  repoMetrics,
+  hasAudited,
+  totalCommentsCount
+} = useAuditState();
+
+const loader = useGitHubLoader();
+
+const isRepoAudited = computed(() => {
+  return hasAudited.value && (loader.status.value === 'done' || repoMetrics.value.totalFiles > 0);
+});
+
+const showProgressBar = computed(() => {
+  return activeMode.value === 'repo' && (loader.isLoading.value || (isRepoAudited.value && loader.status.value === 'done'));
+});
 </script>
 
 <template>
@@ -39,21 +60,116 @@ const { activeMode } = useAuditState();
           <div
             v-if="activeMode === 'repo'"
             key="repo"
-            class="bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center space-y-4 shadow-xl"
+            class="w-full space-y-6"
           >
-            <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <FolderGit2 class="w-6 h-6" />
-            </div>
-            <div class="space-y-1">
-              <h2 class="text-lg font-semibold text-white">Repository Scan</h2>
-              <p class="text-sm text-slate-400 max-w-md mx-auto">
-                Audite a base de código inteira a partir de repositórios públicos do GitHub ou arquivos compactados em .zip.
-              </p>
-            </div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-mono text-slate-400 bg-slate-800/80 border border-slate-700">
-              <Sparkles class="w-3.5 h-3.5 text-emerald-400" />
-              Ingestão e parsing de repositório em preparação
-            </div>
+            <RepositoryInput :loader="loader" />
+
+            <transition
+              enter-active-class="transition duration-200 ease-out"
+              enter-from-class="opacity-0 translate-y-2"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-2"
+            >
+              <div v-if="showProgressBar" class="w-full">
+                <AuditProgressBar
+                  :percent="loader.progress.value.percent"
+                  :current="loader.progress.value.current"
+                  :total="loader.progress.value.total"
+                  :current-file="loader.progress.value.currentFile"
+                  :phase="loader.progress.value.phase"
+                />
+              </div>
+            </transition>
+
+            <transition
+              enter-active-class="transition duration-200 ease-out"
+              enter-from-class="opacity-0 translate-y-2"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-2"
+            >
+              <div v-if="isRepoAudited && !loader.isLoading.value" class="space-y-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Arquivos</span>
+                    <span class="text-2xl font-bold font-mono text-white">{{ repoMetrics.totalFiles }}</span>
+                  </div>
+                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Auditados</span>
+                    <span class="text-2xl font-bold font-mono text-emerald-400">{{ repoMetrics.supportedFiles }}</span>
+                  </div>
+                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pulados</span>
+                    <span class="text-2xl font-bold font-mono text-slate-400">{{ repoMetrics.skippedFiles?.length || 0 }}</span>
+                  </div>
+                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Comentários</span>
+                    <span
+                      class="text-2xl font-bold font-mono"
+                      :class="totalCommentsCount > 0 ? 'text-amber-400' : 'text-emerald-400'"
+                    >
+                      {{ totalCommentsCount }}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  v-if="totalCommentsCount === 0"
+                  class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-6 sm:p-8 text-center space-y-3"
+                >
+                  <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                    <CheckCircle2 class="w-6 h-6" />
+                  </div>
+                  <h3 class="text-base sm:text-lg font-semibold text-white">Nenhum comentário detectado</h3>
+                  <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                    A base de código analisada não possui comentários ou anotações nas linguagens suportadas.
+                  </p>
+                </div>
+
+                <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                      <FileCode class="w-4 h-4 text-emerald-400" />
+                      Preview dos Comentários Detectados ({{ totalCommentsCount }})
+                    </h3>
+                    <span class="text-xs font-mono text-slate-400">
+                      {{ affectedFiles.length }} {{ affectedFiles.length === 1 ? 'arquivo com comentários' : 'arquivos com comentários' }}
+                    </span>
+                  </div>
+
+                  <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    <div
+                      v-for="comment in comments"
+                      :key="comment.id"
+                      class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
+                    >
+                      <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
+                        <span class="text-emerald-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
+                        <div class="flex items-center gap-1.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
+                            {{ comment.language }}
+                          </span>
+                          <span
+                            v-for="tag in comment.tags"
+                            :key="tag"
+                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+                          >
+                            <Tag class="w-2.5 h-2.5" />
+                            {{ tag }}
+                          </span>
+                        </div>
+                      </div>
+                      <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
+                        {{ comment.text }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </transition>
           </div>
 
           <div

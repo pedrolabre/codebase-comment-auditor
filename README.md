@@ -29,7 +29,8 @@ codebase-comment-auditor/
 │   │   ├── AuditProgressBar.vue
 │   │   ├── DiffInput.vue
 │   │   ├── ModeSelector.vue
-│   │   └── Navbar.vue
+│   │   ├── Navbar.vue
+│   │   └── RepositoryInput.vue
 │   ├── composables/
 │   │   ├── useAuditState.js
 │   │   └── useGitHubLoader.js
@@ -59,6 +60,7 @@ codebase-comment-auditor/
 │       ├── fileIgnoreRules.test.js
 │       ├── githubService.test.js
 │       ├── parserManager.test.js
+│       ├── RepositoryInput.test.js
 │       ├── useAuditState.test.js
 │       ├── useGitHubLoader.test.js
 │       └── zipService.test.js
