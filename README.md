@@ -28,6 +28,7 @@ codebase-comment-auditor/
 │   ├── components/
 │   │   ├── AuditProgressBar.vue
 │   │   ├── DiffInput.vue
+│   │   ├── FilterToolbar.vue
 │   │   ├── MetricsSummary.vue
 │   │   ├── ModeSelector.vue
 │   │   ├── Navbar.vue
@@ -35,6 +36,7 @@ codebase-comment-auditor/
 │   │   └── SkippedFilesModal.vue
 │   ├── composables/
 │   │   ├── useAuditState.js
+│   │   ├── useCommentFilter.js
 │   │   └── useGitHubLoader.js
 │   ├── main.js
 │   ├── parsing/
@@ -60,12 +62,14 @@ codebase-comment-auditor/
 │       ├── diffCommentExtractor.test.js
 │       ├── diffParserService.test.js
 │       ├── fileIgnoreRules.test.js
+│       ├── FilterToolbar.test.js
 │       ├── githubService.test.js
 │       ├── MetricsSummary.test.js
 │       ├── parserManager.test.js
 │       ├── RepositoryInput.test.js
 │       ├── SkippedFilesModal.test.js
 │       ├── useAuditState.test.js
+│       ├── useCommentFilter.test.js
 │       ├── useGitHubLoader.test.js
 │       └── zipService.test.js
 └── vite.config.js

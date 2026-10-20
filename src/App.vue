@@ -1,15 +1,17 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { CheckCircle2, FileCode, Tag } from 'lucide-vue-next';
+import { CheckCircle2, FileCode, Tag, Search, RotateCcw } from 'lucide-vue-next';
 import Navbar from './components/Navbar.vue';
 import ModeSelector from './components/ModeSelector.vue';
 import DiffInput from './components/DiffInput.vue';
 import RepositoryInput from './components/RepositoryInput.vue';
 import AuditProgressBar from './components/AuditProgressBar.vue';
 import MetricsSummary from './components/MetricsSummary.vue';
+import FilterToolbar from './components/FilterToolbar.vue';
 import SkippedFilesModal from './components/SkippedFilesModal.vue';
 import { useAuditState } from './composables/useAuditState.js';
 import { useGitHubLoader } from './composables/useGitHubLoader.js';
+import { useCommentFilter } from './composables/useCommentFilter.js';
 
 const {
   activeMode,
@@ -21,14 +23,26 @@ const {
 } = useAuditState();
 
 const loader = useGitHubLoader();
+const commentFilter = useCommentFilter(comments);
+const { filteredComments, hasActiveFilters, resetFilters } = commentFilter;
+
 const isSkippedModalOpen = ref(false);
 
 const isRepoAudited = computed(() => {
   return hasAudited.value && (loader.status.value === 'done' || repoMetrics.value.totalFiles > 0);
 });
 
+const isDiffAudited = computed(() => {
+  return activeMode.value === 'diff' && hasAudited.value;
+});
+
 const showProgressBar = computed(() => {
   return activeMode.value === 'repo' && (loader.isLoading.value || (isRepoAudited.value && loader.status.value === 'done'));
+});
+
+const filteredAffectedFilesCount = computed(() => {
+  const set = new Set(filteredComments.value.map((c) => c.file));
+  return set.size;
 });
 </script>
 
@@ -110,42 +124,69 @@ const showProgressBar = computed(() => {
                   </p>
                 </div>
 
-                <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                  <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                      <FileCode class="w-4 h-4 text-emerald-400" />
-                      Preview dos Comentários Detectados ({{ totalCommentsCount }})
-                    </h3>
-                    <span class="text-xs font-mono text-slate-400">
-                      {{ affectedFiles.length }} {{ affectedFiles.length === 1 ? 'arquivo com comentários' : 'arquivos com comentários' }}
-                    </span>
+                <div v-else class="space-y-6">
+                  <FilterToolbar :filter="commentFilter" />
+
+                  <div
+                    v-if="filteredComments.length === 0"
+                    class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-center space-y-3"
+                  >
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                      <Search class="w-6 h-6" />
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-white">Nenhum comentário corresponde aos filtros</h3>
+                    <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                      Tente ajustar o termo de busca, remover filtros de tag/linguagem ou desativar regras da Allowlist.
+                    </p>
+                    <div class="pt-2">
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-950 bg-cyan-400 hover:bg-cyan-300 transition"
+                        @click="resetFilters"
+                      >
+                        <RotateCcw class="w-3.5 h-3.5" />
+                        Restaurar Filtros
+                      </button>
+                    </div>
                   </div>
 
-                  <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
-                    <div
-                      v-for="comment in comments"
-                      :key="comment.id"
-                      class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
-                    >
-                      <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
-                        <span class="text-emerald-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
-                        <div class="flex items-center gap-1.5">
-                          <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
-                            {{ comment.language }}
-                          </span>
-                          <span
-                            v-for="tag in comment.tags"
-                            :key="tag"
-                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
-                          >
-                            <Tag class="w-2.5 h-2.5" />
-                            {{ tag }}
-                          </span>
+                  <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <FileCode class="w-4 h-4 text-emerald-400" />
+                        Preview dos Comentários Detectados ({{ filteredComments.length }})
+                      </h3>
+                      <span class="text-xs font-mono text-slate-400">
+                        {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
+                      </span>
+                    </div>
+
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                      <div
+                        v-for="comment in filteredComments"
+                        :key="comment.id"
+                        class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
+                      >
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
+                          <span class="text-emerald-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
+                          <div class="flex items-center gap-1.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
+                              {{ comment.language }}
+                            </span>
+                            <span
+                              v-for="tag in comment.tags"
+                              :key="tag"
+                              class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+                            >
+                              <Tag class="w-2.5 h-2.5" />
+                              {{ tag }}
+                            </span>
+                          </div>
                         </div>
+                        <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
+                          {{ comment.text }}
+                        </p>
                       </div>
-                      <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
-                        {{ comment.text }}
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -156,9 +197,104 @@ const showProgressBar = computed(() => {
           <div
             v-else
             key="diff"
-            class="w-full"
+            class="w-full space-y-6"
           >
-            <DiffInput />
+            <DiffInput :show-preview="false" />
+
+            <transition
+              enter-active-class="transition duration-200 ease-out"
+              enter-from-class="opacity-0 translate-y-2"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-2"
+            >
+              <div v-if="isDiffAudited" class="space-y-6">
+                <MetricsSummary @open-skipped="isSkippedModalOpen = true" />
+
+                <div
+                  v-if="totalCommentsCount === 0"
+                  class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-6 sm:p-8 text-center space-y-3"
+                >
+                  <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                    <CheckCircle2 class="w-6 h-6" />
+                  </div>
+                  <h3 class="text-base sm:text-lg font-semibold text-white">
+                    Nenhum comentário adicionado detectado
+                  </h3>
+                  <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                    As alterações introduzidas no diff estão limpas de novos comentários de desenvolvimento ou anotações nas linguagens suportadas.
+                  </p>
+                </div>
+
+                <div v-else class="space-y-6">
+                  <FilterToolbar :filter="commentFilter" />
+
+                  <div
+                    v-if="filteredComments.length === 0"
+                    class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-center space-y-3"
+                  >
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                      <Search class="w-6 h-6" />
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-white">Nenhum comentário corresponde aos filtros</h3>
+                    <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                      Tente ajustar o termo de busca, remover filtros de tag/linguagem ou desativar regras da Allowlist.
+                    </p>
+                    <div class="pt-2">
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-950 bg-cyan-400 hover:bg-cyan-300 transition"
+                        @click="resetFilters"
+                      >
+                        <RotateCcw class="w-3.5 h-3.5" />
+                        Restaurar Filtros
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <FileCode class="w-4 h-4 text-cyan-400" />
+                        Preview dos Comentários Adicionados ({{ filteredComments.length }})
+                      </h3>
+                      <span class="text-xs font-mono text-slate-400">
+                        {{ filteredAffectedFilesCount }} {{ filteredAffectedFilesCount === 1 ? 'arquivo afetado' : 'arquivos afetados' }}
+                      </span>
+                    </div>
+
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                      <div
+                        v-for="comment in filteredComments"
+                        :key="comment.id"
+                        class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
+                      >
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
+                          <span class="text-cyan-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
+                          <div class="flex items-center gap-1.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
+                              {{ comment.language }}
+                            </span>
+                            <span
+                              v-for="tag in comment.tags"
+                              :key="tag"
+                              class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+                            >
+                              <Tag class="w-2.5 h-2.5" />
+                              {{ tag }}
+                            </span>
+                          </div>
+                        </div>
+                        <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
+                          {{ comment.text }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </transition>
           </div>
         </transition>
       </section>

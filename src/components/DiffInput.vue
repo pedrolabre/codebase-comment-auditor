@@ -14,6 +14,13 @@ import {
 } from 'lucide-vue-next';
 import { useAuditState } from '../composables/useAuditState.js';
 
+const props = defineProps({
+  showPreview: {
+    type: Boolean,
+    default: true
+  }
+});
+
 const {
   diffText,
   comments,
@@ -222,7 +229,7 @@ function handleClear() {
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 translate-y-2"
     >
-      <div v-if="hasAudited" class="space-y-6">
+      <div v-if="hasAudited && showPreview" class="space-y-6">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
             <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Arquivos</span>
