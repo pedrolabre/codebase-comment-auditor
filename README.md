@@ -77,6 +77,8 @@ codebase-comment-auditor/
 │       ├── useAuditState.test.js
 │       ├── useCommentFilter.test.js
 │       ├── useGitHubLoader.test.js
+│       ├── vercelConfig.test.js
 │       └── zipService.test.js
+├── vercel.json
 └── vite.config.js
 ```

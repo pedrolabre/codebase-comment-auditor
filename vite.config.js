@@ -7,11 +7,25 @@ export default defineConfig({
   server: {
     port: 3000
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue'],
+          'vendor-highlight': ['highlight.js'],
+          'vendor-jszip': ['jszip'],
+          'vendor-treesitter': ['web-tree-sitter']
+        }
+      }
+    }
+  },
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.js'],
     globals: false,
     testTimeout: 20000,
-    isolate: false
+    isolate: false,
+    fileParallelism: false
   }
 })
