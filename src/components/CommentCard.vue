@@ -99,26 +99,26 @@ defineExpose({
 
 <template>
   <article
-    class="comment-card bg-slate-900 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-4 transition-all duration-150 space-y-3 shadow-sm"
+    class="comment-card bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-none p-3 transition-colors space-y-2"
     :data-comment-id="comment.id"
   >
-    <header class="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-slate-800/70 text-xs">
-      <div class="flex items-center gap-2 flex-wrap min-w-0">
+    <header class="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-slate-800 text-xs">
+      <div class="flex items-center gap-1.5 flex-wrap min-w-0">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 font-mono text-cyan-400 hover:text-cyan-300 transition group text-left"
+          class="inline-flex items-center gap-1 font-mono text-slate-300 hover:text-white transition group text-left"
           title="Copiar caminho e linha"
           @click="copyPath"
         >
-          <FileCode class="w-3.5 h-3.5 shrink-0 text-cyan-400/80 group-hover:text-cyan-300" />
+          <FileCode class="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-slate-200" />
           <span class="font-semibold truncate max-w-xs sm:max-w-md">{{ comment.file }}</span>
           <span class="text-slate-500">:</span>
-          <span class="font-bold text-slate-300">
+          <span class="font-bold text-slate-200">
             {{ comment.startLine === comment.endLine ? comment.startLine : `${comment.startLine}-${comment.endLine}` }}
           </span>
           <span
             v-if="isPathCopied"
-            class="text-[10px] text-emerald-400 font-sans ml-1"
+            class="text-[10px] text-sky-400 font-mono ml-1"
           >
             Copiado!
           </span>
@@ -126,7 +126,7 @@ defineExpose({
 
         <span
           v-if="comment.isAdded"
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+          class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-none text-[10px] font-mono font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30"
           title="Comentário introduzido no diff"
         >
           <PlusCircle class="w-2.5 h-2.5" />
@@ -134,10 +134,10 @@ defineExpose({
         </span>
       </div>
 
-      <div class="flex items-center gap-1.5 flex-wrap">
+      <div class="flex items-center gap-1 flex-wrap">
         <span
           v-if="comment.language"
-          class="px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold bg-slate-800/90 text-slate-300 border border-slate-700/60"
+          class="px-1.5 py-0.2 rounded-none text-[10px] font-mono uppercase font-bold bg-slate-800 text-slate-300 border border-slate-700"
         >
           {{ comment.language }}
         </span>
@@ -145,7 +145,7 @@ defineExpose({
         <span
           v-for="tag in comment.tags"
           :key="tag"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border"
+          class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-none text-[10px] font-mono font-bold border"
           :class="getTagBadgeClass(tag)"
         >
           <Tag class="w-2.5 h-2.5" />
@@ -154,7 +154,7 @@ defineExpose({
 
         <span
           v-if="comment.hasUrl"
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30"
+          class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-none text-[10px] font-mono font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30"
           title="Possui link externo"
         >
           <ExternalLink class="w-2.5 h-2.5" />
@@ -163,38 +163,38 @@ defineExpose({
       </div>
     </header>
 
-    <div class="space-y-2">
-      <div class="flex items-start justify-between gap-3 bg-slate-950/60 border border-slate-800/60 rounded-lg p-3">
+    <div class="space-y-1.5">
+      <div class="flex items-start justify-between gap-2.5 bg-slate-950 border border-slate-800 p-2 rounded-none">
         <p class="font-mono text-xs text-slate-200 whitespace-pre-wrap break-words flex-1 leading-relaxed">
           {{ comment.content || comment.text }}
         </p>
 
         <button
           type="button"
-          class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition"
-          :class="isCopied ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/70'"
+          class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono font-medium transition"
+          :class="isCopied ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'"
           title="Copiar conteúdo do comentário"
           @click="copyContent"
         >
-          <Check v-if="isCopied" class="w-3 h-3 text-emerald-400" />
-          <Copy v-else class="w-3 h-3 text-slate-400" />
+          <Check v-if="isCopied" class="w-2.5 h-2.5 text-sky-400" />
+          <Copy v-else class="w-2.5 h-2.5 text-slate-400" />
           <span>{{ isCopied ? 'Copiado!' : 'Copiar' }}</span>
         </button>
       </div>
 
-      <div class="pt-1">
+      <div class="pt-0.5">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition select-none font-medium"
+          class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400 hover:text-slate-200 transition select-none"
           @click="toggleContext"
         >
-          <ChevronUp v-if="isContextOpen" class="w-3.5 h-3.5 text-cyan-400" />
-          <ChevronDown v-else class="w-3.5 h-3.5 text-slate-500" />
+          <ChevronUp v-if="isContextOpen" class="w-3 h-3 text-slate-400" />
+          <ChevronDown v-else class="w-3 h-3 text-slate-500" />
           <span>{{ isContextOpen ? 'Ocultar contexto' : 'Exibir contexto de código' }}</span>
         </button>
       </div>
 
-      <div v-show="isContextOpen" class="pt-1">
+      <div v-show="isContextOpen" class="pt-0.5">
         <CodeContextViewer
           :context="comment.context"
           :start-line="comment.startLine"

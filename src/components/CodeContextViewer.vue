@@ -129,33 +129,33 @@ defineExpose({
 </script>
 
 <template>
-  <div class="code-context-viewer w-full bg-slate-950 border border-slate-800/80 rounded-lg overflow-hidden text-xs font-mono shadow-inner">
+  <div class="code-context-viewer w-full bg-slate-950 border border-slate-800 rounded-none overflow-hidden text-xs font-mono">
     <div
       v-if="computedLines.length === 0"
-      class="p-3 text-slate-500 italic text-center"
+      class="p-2 text-slate-500 italic text-center"
     >
       Nenhum contexto de código disponível
     </div>
 
     <div
       v-else
-      class="divide-y divide-slate-900/60 overflow-x-auto"
+      class="divide-y divide-slate-900 overflow-x-auto"
     >
       <div
         v-for="line in computedLines"
         :key="line.lineNumber"
-        class="flex items-stretch transition-colors font-mono leading-relaxed"
+        class="flex items-stretch transition-colors font-mono leading-normal"
         :class="line.isTarget ? 'bg-amber-500/10 border-l-2 border-amber-500 text-amber-200' : 'text-slate-300 hover:bg-slate-900/40'"
       >
         <span
-          class="w-12 shrink-0 py-1 pr-3 text-right select-none border-r border-slate-800/80 text-[11px]"
-          :class="line.isTarget ? 'text-amber-400 font-bold bg-amber-500/10' : 'text-slate-600 bg-slate-950/80'"
+          class="w-10 shrink-0 py-0.5 pr-2.5 text-right select-none border-r border-slate-800 text-[10px]"
+          :class="line.isTarget ? 'text-amber-400 font-bold bg-amber-500/10' : 'text-slate-600 bg-slate-950'"
         >
           {{ line.lineNumber }}
         </span>
 
         <span
-          class="flex-1 py-1 pl-3 pr-4 whitespace-pre overflow-x-auto selection:bg-slate-700 selection:text-white"
+          class="flex-1 py-0.5 pl-2.5 pr-3 whitespace-pre overflow-x-auto selection:bg-slate-700 selection:text-white"
           v-html="line.html"
         />
       </div>

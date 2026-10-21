@@ -4,7 +4,6 @@ import {
   X,
   Search,
   FileX2,
-  Filter,
   FolderX
 } from 'lucide-vue-next';
 import { useAuditState } from '../composables/useAuditState.js';
@@ -179,20 +178,17 @@ defineExpose({
       role="dialog"
       aria-modal="true"
       aria-labelledby="skipped-modal-title"
-      class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+      class="bg-slate-900 border border-slate-800 rounded-none w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
     >
-      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800">
-        <div class="flex items-center gap-3">
-          <span class="w-9 h-9 rounded-xl bg-slate-800 text-cyan-400 border border-slate-700 flex items-center justify-center">
-            <FileX2 class="w-5 h-5" />
+      <div class="flex items-center justify-between p-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-none bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center">
+            <FileX2 class="w-3.5 h-3.5" />
           </span>
           <div>
-            <h2 id="skipped-modal-title" class="text-base sm:text-lg font-semibold text-white tracking-tight">
+            <h2 id="skipped-modal-title" class="text-xs sm:text-sm font-semibold text-white tracking-tight font-mono">
               Arquivos Pulados na Auditoria
             </h2>
-            <p class="text-xs text-slate-400">
-              Transparência técnica sobre arquivos descartados deterministicamente antes da análise sintática.
-            </p>
           </div>
         </div>
 
@@ -200,100 +196,90 @@ defineExpose({
           type="button"
           data-testid="close-modal-btn"
           aria-label="Fechar modal"
-          class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          class="p-1 rounded-none text-slate-400 hover:text-white hover:bg-slate-800 transition"
           @click="closeModal"
         >
-          <X class="w-5 h-5" />
+          <X class="w-4 h-4" />
         </button>
       </div>
 
-      <div class="p-4 sm:p-5 border-b border-slate-800/80 bg-slate-950/40 space-y-3">
+      <div class="p-3 border-b border-slate-800 bg-slate-950/40 space-y-2">
         <div class="relative">
-          <Search class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             v-model="searchQuery"
             type="text"
             data-testid="skipped-search-input"
             placeholder="Filtrar por caminho ou motivo de descarte..."
-            class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/40 font-mono"
+            class="w-full bg-slate-900 border border-slate-800 rounded-none pl-8 pr-3 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-slate-600 font-mono"
           />
         </div>
 
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div class="flex flex-wrap items-center gap-1">
           <button
             v-for="cat in availableCategories"
             :key="cat.id"
             type="button"
-            data-testid="category-filter-btn"
-            class="px-2.5 py-1 rounded-lg font-medium transition whitespace-nowrap flex items-center gap-1.5"
+            :data-testid="`filter-tab-${cat.id}`"
+            class="px-2 py-0.5 rounded-none text-[10px] font-mono border transition flex items-center gap-1"
             :class="[
               activeCategory === cat.id
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-800'
+                ? 'bg-slate-800 text-white border-slate-600 font-bold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeCategory = cat.id"
           >
             <span>{{ cat.label }}</span>
-            <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-900/80 text-slate-300">
+            <span
+              class="px-1 py-0.2 rounded-none text-[9px]"
+              :class="activeCategory === cat.id ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-500'"
+            >
               {{ categoryCounts[cat.id] || 0 }}
             </span>
           </button>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2 max-h-[50vh]">
+      <div class="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-[160px] max-h-[380px]">
         <div
-          v-if="allFiles.length === 0"
-          class="py-12 text-center text-slate-500 space-y-2"
+          v-if="filteredFiles.length === 0"
+          class="text-center py-8 text-slate-500 space-y-1"
         >
-          <FolderX class="w-8 h-8 mx-auto text-slate-600" />
-          <p class="text-sm">Nenhum arquivo pulado na auditoria.</p>
+          <FolderX class="w-6 h-6 mx-auto text-slate-600" />
+          <p class="text-xs font-mono">Nenhum arquivo corresponde aos critérios selecionados.</p>
         </div>
 
         <div
-          v-else-if="filteredFiles.length === 0"
-          class="py-12 text-center text-slate-500 space-y-2"
+          v-for="(file, index) in filteredFiles"
+          :key="index"
+          class="flex items-center justify-between gap-2 p-2 rounded-none bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 text-xs font-mono transition"
         >
-          <Filter class="w-8 h-8 mx-auto text-slate-600" />
-          <p class="text-sm">Nenhum arquivo corresponde aos critérios de busca informados.</p>
-        </div>
-
-        <div
-          v-for="file in filteredFiles"
-          :key="file.path"
-          data-testid="skipped-file-item"
-          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition"
-        >
-          <div class="min-w-0 flex-1">
-            <span class="font-mono text-xs text-slate-300 break-all">
+          <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            <span class="text-slate-500 text-[10px] select-none shrink-0 w-6 text-right">
+              {{ index + 1 }}
+            </span>
+            <span class="text-slate-200 truncate" :title="file.path">
               {{ file.path }}
             </span>
-          </div>
-
-          <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-            <span
-              class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border"
-              :class="getReasonBadge(file.reason).class"
-            >
-              {{ getReasonBadge(file.reason).label }}
-            </span>
-
-            <span class="text-[11px] font-mono text-slate-500 min-w-14 text-right">
-              {{ formatFileSize(file.size) }}
+            <span v-if="file.size" class="text-[10px] text-slate-500 shrink-0">
+              ({{ formatFileSize(file.size) }})
             </span>
           </div>
+
+          <span
+            class="px-1.5 py-0.2 rounded-none text-[10px] font-mono border shrink-0"
+            :class="getReasonBadge(file.reason).class"
+          >
+            {{ getReasonBadge(file.reason).label }}
+          </span>
         </div>
       </div>
 
-      <div class="p-4 sm:p-5 border-t border-slate-800 flex items-center justify-between bg-slate-950/60">
-        <span class="text-xs font-mono text-slate-400">
-          Exibindo {{ filteredFiles.length }} de {{ allFiles.length }} descartes
-        </span>
-
+      <div class="flex items-center justify-between p-2.5 border-t border-slate-800 bg-slate-950 text-[11px] font-mono text-slate-400">
+        <span>Total: {{ filteredFiles.length }} de {{ allFiles.length }} pulados</span>
         <button
           type="button"
-          data-testid="footer-close-btn"
-          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+          class="px-3 py-1 rounded-none text-xs font-mono font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
           @click="closeModal"
         >
           Fechar

@@ -271,7 +271,7 @@ defineExpose({
 
 <template>
   <transition
-    enter-active-class="transition duration-150 ease-out"
+    enter-active-class="transition duration-100 ease-out"
     enter-from-class="opacity-0"
     enter-to-class="opacity-100"
     leave-active-class="transition duration-100 ease-in"
@@ -280,101 +280,99 @@ defineExpose({
   >
     <div
       v-if="isVisible"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="export-modal-title"
       @click.self="closeModal"
     >
       <div
-        class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        class="bg-slate-900 border border-slate-800 rounded-none max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
       >
-        <header class="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/90">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
-              <Download class="w-4 h-4" />
+        <header class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-800 bg-slate-900">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-none bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center">
+              <Download class="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 id="export-modal-title" class="text-base font-semibold text-white">
-                Exportar Relatório de Auditoria
+              <h2 id="export-modal-title" class="text-xs sm:text-sm font-semibold text-white font-mono">
+                Exportar Relatório ({{ summaryStats.totalComments }} comentários)
               </h2>
-              <p class="text-xs text-slate-400">
-                Gere arquivos prontos para Pull Requests ou pipelines de dados ({{ summaryStats.totalComments }} comentários)
-              </p>
             </div>
           </div>
 
           <button
             type="button"
-            class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+            class="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-none transition"
             aria-label="Fechar modal"
             @click="closeModal"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
         </header>
 
-        <div class="px-6 pt-4 pb-2 border-b border-slate-800/80 flex items-center justify-between gap-4 flex-wrap bg-slate-950/40">
-          <div class="inline-flex rounded-lg bg-slate-800/80 p-1 border border-slate-700/60 text-xs">
+        <div class="flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/60 flex-wrap gap-2 text-xs font-mono">
+          <div class="inline-flex p-0.5 bg-slate-900 border border-slate-800 rounded-none">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition"
-              :class="activeTab === 'markdown' ? 'bg-cyan-500 text-slate-950 font-bold shadow' : 'text-slate-300 hover:text-white'"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs font-mono transition"
+              :class="[
+                activeTab === 'markdown'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-slate-200'
+              ]"
               @click="activeTab = 'markdown'"
             >
-              <FileText class="w-3.5 h-3.5" />
-              Markdown (.md)
+              <FileText class="w-3 h-3" />
+              <span>Markdown (.md)</span>
             </button>
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition"
-              :class="activeTab === 'json' ? 'bg-cyan-500 text-slate-950 font-bold shadow' : 'text-slate-300 hover:text-white'"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs font-mono transition"
+              :class="[
+                activeTab === 'json'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-slate-200'
+              ]"
               @click="activeTab = 'json'"
             >
-              <FileJson class="w-3.5 h-3.5" />
-              JSON (.json)
+              <FileJson class="w-3 h-3" />
+              <span>JSON (.json)</span>
             </button>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
-              :class="isCopied ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs font-mono font-medium transition"
+              :class="[
+                isCopied
+                  ? 'bg-slate-700 text-white border border-slate-600'
+                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
+              ]"
               @click="copyReport"
             >
-              <Check v-if="isCopied" class="w-3.5 h-3.5 text-emerald-400" />
-              <Copy v-else class="w-3.5 h-3.5 text-slate-400" />
+              <Check v-if="isCopied" class="w-3 h-3 text-slate-200" />
+              <Copy v-else class="w-3 h-3" />
               <span>{{ isCopied ? 'Copiado!' : 'Copiar' }}</span>
             </button>
 
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-400 hover:bg-cyan-300 text-slate-950 transition shadow"
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-xs font-mono font-semibold text-slate-950 bg-slate-100 hover:bg-white border border-slate-200 transition"
               @click="downloadReport"
             >
-              <Download class="w-3.5 h-3.5" />
-              <span>Baixar {{ activeTab === 'markdown' ? '.md' : '.json' }}</span>
+              <Download class="w-3 h-3" />
+              <span>Baixar Arquivo</span>
             </button>
           </div>
         </div>
 
-        <div class="flex-1 p-6 overflow-hidden flex flex-col min-h-0 bg-slate-950/60">
-          <div class="flex-1 rounded-xl bg-slate-950 border border-slate-800 overflow-y-auto p-4 text-xs font-mono text-slate-300 leading-relaxed selection:bg-cyan-900 selection:text-white">
+        <div class="flex-1 p-3 overflow-hidden bg-slate-950 flex flex-col">
+          <div class="flex-1 rounded-none bg-slate-900 border border-slate-800 overflow-y-auto p-3 text-xs font-mono text-slate-300 leading-relaxed">
             <pre class="whitespace-pre-wrap font-mono">{{ activeContent }}</pre>
           </div>
         </div>
-
-        <footer class="flex items-center justify-between px-6 py-3 border-t border-slate-800 bg-slate-900/90 text-xs text-slate-400">
-          <span>Formato: {{ activeTab === 'markdown' ? 'GitHub Flavored Markdown' : 'JSON Estruturado 2-spaces' }}</span>
-          <button
-            type="button"
-            class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-            @click="closeModal"
-          >
-            Fechar
-          </button>
-        </footer>
       </div>
     </div>
   </transition>

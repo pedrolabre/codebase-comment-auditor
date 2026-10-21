@@ -56,47 +56,47 @@ const isComplete = computed(() => props.phase === 'done' || clampedPercent.value
 </script>
 
 <template>
-  <div class="w-full bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
-    <div class="flex items-center justify-between text-sm">
+  <div class="w-full bg-slate-900 border border-slate-800 rounded-none p-2.5 space-y-2">
+    <div class="flex items-center justify-between text-xs font-mono">
       <div class="flex items-center gap-2">
         <span
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border"
+          class="inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-mono border"
           :class="[
             isComplete
-              ? 'bg-emerald-950 text-emerald-400 border-emerald-800/50'
+              ? 'bg-slate-800 text-slate-200 border-slate-700'
               : phase === 'error'
-              ? 'bg-red-950 text-red-400 border-red-800/50'
-              : 'bg-cyan-950 text-cyan-400 border-cyan-800/50'
+              ? 'bg-rose-950 text-rose-300 border-rose-800'
+              : 'bg-slate-800 text-sky-300 border-slate-700'
           ]"
         >
           <span
-            class="w-1.5 h-1.5 rounded-full mr-1.5"
+            class="w-1.5 h-1.5 mr-1"
             :class="[
               isComplete
-                ? 'bg-emerald-400'
+                ? 'bg-slate-300'
                 : phase === 'error'
-                ? 'bg-red-400'
-                : 'bg-cyan-400 animate-pulse'
+                ? 'bg-rose-400'
+                : 'bg-sky-400 animate-pulse'
             ]"
           ></span>
           {{ phaseLabel }}
         </span>
 
-        <span v-if="total > 0" class="text-xs text-slate-400 font-mono">
+        <span v-if="total > 0" class="text-[11px] text-slate-400 font-mono">
           <span class="text-slate-200 font-semibold">{{ current }}</span> / {{ total }} arquivos
         </span>
       </div>
 
       <div
-        class="font-mono text-sm font-bold"
-        :class="isComplete ? 'text-emerald-400' : 'text-cyan-400'"
+        class="font-mono text-xs font-bold"
+        :class="isComplete ? 'text-slate-200' : 'text-sky-400'"
       >
         {{ clampedPercent }}%
       </div>
     </div>
 
     <div
-      class="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50 relative"
+      class="w-full h-1.5 bg-slate-950 rounded-none overflow-hidden border border-slate-800 relative"
       role="progressbar"
       :aria-valuenow="clampedPercent"
       aria-valuemin="0"
@@ -104,24 +104,19 @@ const isComplete = computed(() => props.phase === 'done' || clampedPercent.value
       :aria-label="phaseLabel"
     >
       <div
-        class="h-full rounded-full transition-all duration-200 ease-out relative overflow-hidden"
+        class="h-full rounded-none transition-all duration-150 ease-out"
         :class="[
           isComplete
-            ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+            ? 'bg-slate-300'
             : phase === 'error'
-            ? 'bg-gradient-to-r from-red-600 to-rose-400'
-            : 'bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400'
+            ? 'bg-rose-500'
+            : 'bg-sky-500'
         ]"
         :style="{ width: `${clampedPercent}%` }"
-      >
-        <div
-          v-if="!isComplete && phase !== 'error'"
-          class="absolute inset-0 bg-white/20 animate-pulse"
-        ></div>
-      </div>
+      ></div>
     </div>
 
-    <div class="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-950/60 px-3 py-2 rounded-lg border border-slate-800/60 min-h-[34px] overflow-hidden">
+    <div class="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-slate-950 px-2 py-1 rounded-none border border-slate-800 overflow-hidden">
       <span class="text-slate-500 select-none flex-shrink-0">▶</span>
       <span
         class="truncate font-mono"

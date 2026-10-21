@@ -126,64 +126,64 @@ defineExpose({
 </script>
 
 <template>
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
     <div
       data-testid="metric-comments"
-      class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg"
+      class="bg-slate-900 border border-slate-800 rounded-none p-3 flex flex-col justify-between"
     >
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Total Comentários
+      <div class="flex items-center justify-between gap-1.5">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+          Comentários
         </span>
-        <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
-          <MessageSquareCode class="w-4 h-4" />
+        <span class="w-6 h-6 rounded-none bg-slate-800 text-slate-400 flex items-center justify-center">
+          <MessageSquareCode class="w-3.5 h-3.5" />
         </span>
       </div>
 
-      <div class="my-2">
+      <div class="my-1.5">
         <span
-          class="text-2xl sm:text-3xl font-bold font-mono"
-          :class="totalComments > 0 ? 'text-amber-400' : 'text-emerald-400'"
+          class="text-xl sm:text-2xl font-bold font-mono"
+          :class="totalComments > 0 ? 'text-amber-400' : 'text-slate-300'"
         >
           {{ totalComments }}
         </span>
       </div>
 
-      <div class="text-[11px] text-slate-500">
+      <div class="text-[10px] text-slate-500 font-mono">
         {{ currentMode === 'repo' ? 'detectados na árvore CST' : 'adicionados no diff' }}
       </div>
     </div>
 
     <div
       data-testid="metric-audited"
-      class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg"
+      class="bg-slate-900 border border-slate-800 rounded-none p-3 flex flex-col justify-between"
     >
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <div class="flex items-center justify-between gap-1.5">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
           Arquivos Auditados
         </span>
-        <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-          <FileCheck2 class="w-4 h-4" />
+        <span class="w-6 h-6 rounded-none bg-slate-800 text-slate-400 flex items-center justify-center">
+          <FileCheck2 class="w-3.5 h-3.5" />
         </span>
       </div>
 
-      <div class="my-2">
-        <span class="text-2xl sm:text-3xl font-bold font-mono text-emerald-400">
+      <div class="my-1.5">
+        <span class="text-xl sm:text-2xl font-bold font-mono text-slate-200">
           {{ auditedFiles }}
         </span>
       </div>
 
-      <div class="text-[11px] text-slate-500 truncate">
+      <div class="text-[10px] text-slate-500 font-mono truncate">
         {{ auditedFilesSubtitle }}
       </div>
     </div>
 
     <div
       data-testid="metric-skipped"
-      class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg transition-all"
+      class="bg-slate-900 border border-slate-800 rounded-none p-3 flex flex-col justify-between transition-colors"
       :class="[
         isSkippedClickable
-          ? 'group cursor-pointer hover:border-cyan-500/40 hover:bg-slate-850 focus:outline-none focus:ring-2 focus:ring-cyan-500/30'
+          ? 'group cursor-pointer hover:border-slate-700 hover:bg-slate-850 focus:outline-none focus:ring-1 focus:ring-slate-700'
           : 'opacity-90'
       ]"
       :role="isSkippedClickable ? 'button' : undefined"
@@ -193,62 +193,62 @@ defineExpose({
       @keydown.enter.prevent="handleSkippedClick"
       @keydown.space.prevent="handleSkippedClick"
     >
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <div class="flex items-center justify-between gap-1.5">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
           Arquivos Pulados
         </span>
-        <span class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center group-hover:text-cyan-400 transition-colors">
-          <FileX2 class="w-4 h-4" />
+        <span class="w-6 h-6 rounded-none bg-slate-800 text-slate-400 flex items-center justify-center group-hover:text-slate-200 transition-colors">
+          <FileX2 class="w-3.5 h-3.5" />
         </span>
       </div>
 
-      <div class="my-2 flex items-baseline justify-between">
+      <div class="my-1.5 flex items-baseline justify-between">
         <span
-          class="text-2xl sm:text-3xl font-bold font-mono"
-          :class="skippedFilesCount > 0 ? 'text-slate-300 group-hover:text-cyan-300' : 'text-slate-500'"
+          class="text-xl sm:text-2xl font-bold font-mono"
+          :class="skippedFilesCount > 0 ? 'text-slate-200' : 'text-slate-500'"
         >
           {{ skippedFilesCount }}
         </span>
         <span
           v-if="isSkippedClickable"
-          class="inline-flex items-center gap-1 text-[11px] font-medium text-cyan-400 group-hover:text-cyan-300 transition"
+          class="inline-flex items-center gap-1 text-[10px] font-mono text-slate-400 group-hover:text-slate-200 transition"
         >
           Ver lista
-          <ExternalLink class="w-3 h-3" />
+          <ExternalLink class="w-2.5 h-2.5" />
         </span>
       </div>
 
-      <div class="text-[11px] text-slate-500">
-        {{ skippedFilesCount > 0 ? 'descartados por regras determinísticas' : 'nenhum arquivo descartado' }}
+      <div class="text-[10px] text-slate-500 font-mono">
+        {{ skippedFilesCount > 0 ? 'descartados por regras' : 'nenhum descartado' }}
       </div>
     </div>
 
     <div
       data-testid="metric-critical"
-      class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg"
+      class="bg-slate-900 border border-slate-800 rounded-none p-3 flex flex-col justify-between"
     >
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <div class="flex items-center justify-between gap-1.5">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
           Tags Críticas
         </span>
         <span
-          class="w-7 h-7 rounded-lg flex items-center justify-center"
+          class="w-6 h-6 rounded-none flex items-center justify-center"
           :class="criticalTagsCount > 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-500'"
         >
-          <AlertTriangle class="w-4 h-4" />
+          <AlertTriangle class="w-3.5 h-3.5" />
         </span>
       </div>
 
-      <div class="my-2">
+      <div class="my-1.5">
         <span
-          class="text-2xl sm:text-3xl font-bold font-mono"
+          class="text-xl sm:text-2xl font-bold font-mono"
           :class="criticalTagsCount > 0 ? 'text-rose-400' : 'text-slate-500'"
         >
           {{ criticalTagsCount }}
         </span>
       </div>
 
-      <div class="text-[11px] text-slate-500 truncate">
+      <div class="text-[10px] text-slate-500 font-mono truncate">
         {{ criticalSubtitle }}
       </div>
     </div>

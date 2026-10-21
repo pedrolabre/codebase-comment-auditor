@@ -106,35 +106,43 @@ function handleDrop(event) {
   }
 }
 
-async function handleAudit() {
-  if (!canAudit.value) return;
-  await auditDiff();
-}
-
 function handleClear() {
-  resetAudit();
+  diffText.value = '';
   if (fileInputRef.value) {
     fileInputRef.value.value = '';
   }
+  resetAudit();
 }
+
+async function handleAudit() {
+  if (!canAudit.value) return;
+  await auditDiff(diffText.value);
+}
+
+defineExpose({
+  diffText,
+  lineCount,
+  charCount,
+  canAudit,
+  isDragging,
+  handleClear,
+  handleAudit,
+  handleDrop,
+  readFileContent
+});
 </script>
 
 <template>
-  <div class="w-full space-y-6">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-5 shadow-xl">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/80 pb-5">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <GitCompare class="w-4 h-4" />
-            </span>
-            <h2 class="text-lg font-semibold text-white tracking-tight">
-              Inspeção Pré-Commit (Diff Scan)
-            </h2>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-400">
-            Cole a saída unificada do seu terminal ou carregue um arquivo <code class="text-cyan-400 font-mono">.diff</code> / <code class="text-cyan-400 font-mono">.patch</code> para filtrar apenas comentários novos.
-          </p>
+  <div class="w-full space-y-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-none p-3.5 sm:p-4 space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-none bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center">
+            <GitCompare class="w-3.5 h-3.5" />
+          </span>
+          <h2 class="text-xs sm:text-sm font-semibold text-white tracking-tight font-mono">
+            Inspeção de Diff
+          </h2>
         </div>
 
         <div class="flex items-center gap-2 self-start sm:self-auto">
@@ -147,30 +155,30 @@ function handleClear() {
           />
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs font-mono font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
             @click="triggerFileInput"
           >
-            <Upload class="w-3.5 h-3.5 text-cyan-400" />
-            Upload .diff/.patch
+            <Upload class="w-3 h-3 text-slate-400" />
+            Upload patch
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-rose-400 bg-slate-800/50 hover:bg-rose-500/10 border border-slate-700/60 hover:border-rose-500/30 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs font-mono font-medium text-slate-400 hover:text-rose-400 bg-slate-800/60 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 transition disabled:opacity-40 disabled:cursor-not-allowed"
             :disabled="!diffText && !hasAudited"
             @click="handleClear"
           >
-            <Trash2 class="w-3.5 h-3.5" />
+            <Trash2 class="w-3 h-3" />
             Limpar
           </button>
         </div>
       </div>
 
       <div
-        class="relative rounded-xl border transition-all duration-150"
+        class="relative rounded-none border border-slate-800 bg-slate-950/70 transition-colors"
         :class="[
           isDragging
-            ? 'border-cyan-400 ring-2 ring-cyan-500/30 bg-cyan-950/20'
-            : 'border-slate-800 bg-slate-950/60 focus-within:border-cyan-500/60 focus-within:ring-1 focus-within:ring-cyan-500/50'
+            ? 'border-slate-500 bg-slate-900'
+            : 'focus-within:border-slate-600'
         ]"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
@@ -178,76 +186,76 @@ function handleClear() {
       >
         <textarea
           v-model="diffText"
-          rows="12"
-          class="w-full bg-transparent p-4 text-xs sm:text-sm font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none resize-y selection:bg-cyan-500/30 leading-relaxed"
+          rows="8"
+          class="w-full bg-transparent p-3 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none resize-y leading-relaxed"
           :placeholder="placeholderText"
           spellcheck="false"
         ></textarea>
 
-        <div class="flex items-center justify-between px-4 py-2 border-t border-slate-800/80 bg-slate-950/40 text-[11px] font-mono text-slate-500">
-          <div class="flex items-center gap-3">
+        <div class="flex items-center justify-between px-3 py-1.5 border-t border-slate-800/80 bg-slate-950/60 text-[11px] font-mono text-slate-500">
+          <div class="flex items-center gap-2.5">
             <span>{{ lineCount }} {{ lineCount === 1 ? 'linha' : 'linhas' }}</span>
             <span>•</span>
             <span>{{ charCount }} {{ charCount === 1 ? 'caractere' : 'caracteres' }}</span>
           </div>
-          <span v-if="isDragging" class="text-cyan-400 font-sans font-medium flex items-center gap-1">
+          <span v-if="isDragging" class="text-slate-200 font-mono flex items-center gap-1">
             <FileText class="w-3 h-3" /> Solte o arquivo aqui
           </span>
-          <span v-else class="hidden sm:inline text-slate-600">
-            Arraste um patch ou cole com Ctrl+V
+          <span v-else class="hidden sm:inline text-slate-600 font-mono">
+            Cole com Ctrl+V ou arraste arquivo .diff/.patch
           </span>
         </div>
       </div>
 
       <div
         v-if="errorMessage"
-        class="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm"
+        class="flex items-start gap-2 p-2.5 rounded-none bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono"
       >
-        <AlertCircle class="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <AlertCircle class="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
         <span>{{ errorMessage }}</span>
       </div>
 
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
+      <div class="flex items-center justify-end pt-1">
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:ring-2 focus:ring-cyan-400/50 transition shadow-lg shadow-cyan-500/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-cyan-400"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-none text-xs font-semibold font-mono uppercase tracking-wider text-slate-950 bg-slate-100 hover:bg-white border border-slate-200 transition disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="!canAudit"
           @click="handleAudit"
         >
-          <Loader2 v-if="isAuditing" class="w-4 h-4 animate-spin text-slate-950" />
-          <Play v-else class="w-4 h-4 fill-slate-950" />
+          <Loader2 v-if="isAuditing" class="w-3.5 h-3.5 animate-spin text-slate-950" />
+          <Play v-else class="w-3.5 h-3.5 fill-slate-950" />
           <span>{{ isAuditing ? 'Auditando Diff...' : 'Auditar Diff' }}</span>
         </button>
       </div>
     </div>
 
     <transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 translate-y-2"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 translate-y-2"
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
     >
-      <div v-if="hasAudited && showPreview" class="space-y-6">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Arquivos</span>
-            <span class="text-2xl font-bold font-mono text-white">{{ diffStats.filesChanged }}</span>
+      <div v-if="hasAudited && showPreview" class="space-y-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="bg-slate-900 border border-slate-800 rounded-none p-2.5 flex flex-col gap-0.5 font-mono">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Arquivos</span>
+            <span class="text-xl font-bold text-white">{{ diffStats.filesChanged }}</span>
           </div>
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Linhas (+)</span>
-            <span class="text-2xl font-bold font-mono text-emerald-400">+{{ diffStats.additions }}</span>
+          <div class="bg-slate-900 border border-slate-800 rounded-none p-2.5 flex flex-col gap-0.5 font-mono">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Linhas (+)</span>
+            <span class="text-xl font-bold text-slate-200">+{{ diffStats.additions }}</span>
           </div>
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Linhas (-)</span>
-            <span class="text-2xl font-bold font-mono text-rose-400">-{{ diffStats.deletions }}</span>
+          <div class="bg-slate-900 border border-slate-800 rounded-none p-2.5 flex flex-col gap-0.5 font-mono">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Linhas (-)</span>
+            <span class="text-xl font-bold text-rose-400">-{{ diffStats.deletions }}</span>
           </div>
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Comentários</span>
+          <div class="bg-slate-900 border border-slate-800 rounded-none p-2.5 flex flex-col gap-0.5 font-mono">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Comentários</span>
             <span
-              class="text-2xl font-bold font-mono"
-              :class="totalCommentsCount > 0 ? 'text-amber-400' : 'text-emerald-400'"
+              class="text-xl font-bold"
+              :class="totalCommentsCount > 0 ? 'text-amber-400' : 'text-slate-300'"
             >
               {{ totalCommentsCount }}
             </span>
@@ -256,23 +264,23 @@ function handleClear() {
 
         <div
           v-if="totalCommentsCount === 0"
-          class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-6 sm:p-8 text-center space-y-3"
+          class="bg-slate-900 border border-slate-800 rounded-none p-4 text-center space-y-2"
         >
-          <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-            <CheckCircle2 class="w-6 h-6" />
+          <div class="w-8 h-8 mx-auto rounded-none bg-slate-800 text-slate-300 flex items-center justify-center">
+            <CheckCircle2 class="w-4 h-4" />
           </div>
-          <h3 class="text-base sm:text-lg font-semibold text-white">
+          <h3 class="text-xs sm:text-sm font-semibold text-white font-mono">
             Nenhum comentário adicionado detectado
           </h3>
-          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-            As alterações introduzidas no diff estão limpas de novos comentários de desenvolvimento ou anotações nas linguagens suportadas.
+          <p class="text-xs text-slate-400 max-w-md mx-auto font-mono">
+            As alterações introduzidas no diff estão limpas de novos comentários nas linguagens suportadas.
           </p>
         </div>
 
-        <div v-else class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-              <FileCode class="w-4 h-4 text-cyan-400" />
+        <div v-else class="bg-slate-900 border border-slate-800 rounded-none p-3.5 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="text-xs font-semibold text-white flex items-center gap-1.5 font-mono">
+              <FileCode class="w-3.5 h-3.5 text-slate-400" />
               Preview dos Comentários Adicionados ({{ totalCommentsCount }})
             </h3>
             <span class="text-xs font-mono text-slate-400">
@@ -280,29 +288,29 @@ function handleClear() {
             </span>
           </div>
 
-          <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+          <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
             <div
               v-for="comment in comments"
               :key="comment.id"
-              class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 text-xs font-mono space-y-2 hover:border-slate-700 transition"
+              class="bg-slate-950 border border-slate-800 rounded-none p-2.5 text-xs font-mono space-y-1.5"
             >
-              <div class="flex flex-wrap items-center justify-between gap-2 text-slate-400">
-                <span class="text-cyan-400 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
-                <div class="flex items-center gap-1.5">
-                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
+              <div class="flex flex-wrap items-center justify-between gap-1 text-slate-400">
+                <span class="text-slate-200 font-semibold">{{ comment.file }}:{{ comment.startLine }}</span>
+                <div class="flex items-center gap-1">
+                  <span class="px-1.5 py-0.2 rounded-none text-[10px] uppercase font-bold bg-slate-800 text-slate-300 border border-slate-700">
                     {{ comment.language }}
                   </span>
                   <span
                     v-for="tag in comment.tags"
                     :key="tag"
-                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+                    class="px-1.5 py-0.2 rounded-none text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"
                   >
                     <Tag class="w-2.5 h-2.5" />
                     {{ tag }}
                   </span>
                 </div>
               </div>
-              <p class="text-slate-200 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60 whitespace-pre-wrap break-words">
+              <p class="text-slate-200 bg-slate-900 p-2 rounded-none border border-slate-800 whitespace-pre-wrap break-words">
                 {{ comment.text }}
               </p>
             </div>

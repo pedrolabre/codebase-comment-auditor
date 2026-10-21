@@ -8,8 +8,7 @@ import {
   Code2,
   Tag as TagIcon,
   Link,
-  Check,
-  SlidersHorizontal
+  Check
 } from 'lucide-vue-next';
 import { useCommentFilter } from '../composables/useCommentFilter.js';
 
@@ -44,7 +43,7 @@ const filterCountLabel = computed(() => {
   const itemWord = total === 1 ? 'comentário' : 'comentários';
 
   if (!hasActiveFilters.value) {
-    return `${total} ${itemWord} detectados`;
+    return `${total} ${itemWord}`;
   }
   return `Exibindo ${filtered} de ${total} ${itemWord}`;
 });
@@ -87,39 +86,39 @@ defineExpose({
 </script>
 
 <template>
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-      <div class="relative flex-1 max-w-xl">
-        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-          <Search class="w-4 h-4" />
+  <div class="bg-slate-900 border border-slate-800 rounded-none p-3 space-y-2.5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-slate-800 pb-2.5">
+      <div class="relative flex-1 max-w-lg">
+        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
+          <Search class="w-3.5 h-3.5" />
         </div>
         <input
           v-model="searchQuery"
           type="text"
           data-testid="filter-search-input"
-          placeholder="Buscar por texto, arquivo, tag, linguagem ou linha..."
-          class="w-full pl-10 pr-9 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/40 transition font-mono"
+          placeholder="Buscar texto, arquivo, tag, linguagem ou linha..."
+          class="w-full pl-8 pr-8 py-1.5 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-slate-600 transition font-mono"
         />
         <button
           v-if="searchQuery"
           type="button"
           data-testid="filter-search-clear"
-          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition"
+          class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-500 hover:text-slate-300 transition"
           aria-label="Limpar termo de busca"
           @click="handleSearchClear"
         >
-          <X class="w-4 h-4" />
+          <X class="w-3.5 h-3.5" />
         </button>
       </div>
 
-      <div class="flex items-center justify-between md:justify-end gap-3 text-xs">
+      <div class="flex items-center justify-between md:justify-end gap-2 text-xs">
         <span
           data-testid="filter-count-badge"
-          class="font-mono px-3 py-1.5 rounded-lg border text-[11px] sm:text-xs transition-colors"
+          class="font-mono px-2.5 py-1 rounded-none border text-[11px] transition-colors"
           :class="[
             hasActiveFilters
-              ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
-              : 'bg-slate-950/60 text-slate-400 border-slate-800'
+              ? 'bg-slate-800 text-slate-200 border-slate-700'
+              : 'bg-slate-950 text-slate-400 border-slate-800'
           ]"
         >
           {{ filterCountLabel }}
@@ -129,36 +128,36 @@ defineExpose({
           v-if="hasActiveFilters"
           type="button"
           data-testid="filter-reset-btn"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-500/10 border border-slate-700/80 hover:border-rose-500/30 transition shadow-sm"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-none text-xs font-mono font-medium text-slate-300 hover:text-rose-300 bg-slate-800 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 transition"
           @click="handleResetAll"
         >
-          <RotateCcw class="w-3.5 h-3.5" />
-          <span>Limpar Filtros</span>
+          <RotateCcw class="w-3 h-3" />
+          <span>Reset</span>
         </button>
       </div>
     </div>
 
-    <div class="space-y-3">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
-        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-400 shrink-0">
-          <ShieldCheck class="w-3.5 h-3.5 text-cyan-400" />
+    <div class="space-y-2">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 text-xs">
+        <span class="inline-flex items-center gap-1 font-mono font-semibold text-slate-400 shrink-0 text-[11px]">
+          <ShieldCheck class="w-3 h-3 text-slate-400" />
           Allowlist:
         </span>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             data-testid="toggle-hide-copyright"
             :aria-pressed="hideCopyright"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               hideCopyright
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border-slate-600 font-semibold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleAllowlistRule('hideCopyright')"
           >
-            <Check v-if="hideCopyright" class="w-3 h-3 text-cyan-400 shrink-0" />
+            <Check v-if="hideCopyright" class="w-2.5 h-2.5 text-slate-300 shrink-0" />
             <span>Ocultar Copyright</span>
           </button>
 
@@ -166,15 +165,15 @@ defineExpose({
             type="button"
             data-testid="toggle-hide-linters"
             :aria-pressed="hideLinters"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               hideLinters
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border-slate-600 font-semibold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleAllowlistRule('hideLinters')"
           >
-            <Check v-if="hideLinters" class="w-3 h-3 text-cyan-400 shrink-0" />
+            <Check v-if="hideLinters" class="w-2.5 h-2.5 text-slate-300 shrink-0" />
             <span>Ocultar Linters</span>
           </button>
 
@@ -182,15 +181,15 @@ defineExpose({
             type="button"
             data-testid="toggle-hide-docstrings"
             :aria-pressed="hideDocstrings"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               hideDocstrings
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border-slate-600 font-semibold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleAllowlistRule('hideDocstrings')"
           >
-            <Check v-if="hideDocstrings" class="w-3 h-3 text-cyan-400 shrink-0" />
+            <Check v-if="hideDocstrings" class="w-2.5 h-2.5 text-slate-300 shrink-0" />
             <span>Ocultar Docstrings</span>
           </button>
 
@@ -198,15 +197,15 @@ defineExpose({
             type="button"
             data-testid="toggle-hide-tool-generated"
             :aria-pressed="hideToolGenerated"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               hideToolGenerated
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border-slate-600 font-semibold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleAllowlistRule('hideToolGenerated')"
           >
-            <Check v-if="hideToolGenerated" class="w-3 h-3 text-cyan-400 shrink-0" />
+            <Check v-if="hideToolGenerated" class="w-2.5 h-2.5 text-slate-300 shrink-0" />
             <span>Ocultar Gerados</span>
           </button>
         </div>
@@ -214,32 +213,32 @@ defineExpose({
 
       <div
         v-if="availableLanguages.length > 0"
-        class="flex flex-col sm:flex-row sm:items-center gap-2 text-xs pt-1 border-t border-slate-800/50"
+        class="flex flex-col sm:flex-row sm:items-center gap-1.5 text-xs pt-1 border-t border-slate-800"
       >
-        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-400 shrink-0">
-          <Code2 class="w-3.5 h-3.5 text-emerald-400" />
+        <span class="inline-flex items-center gap-1 font-mono font-semibold text-slate-400 shrink-0 text-[11px]">
+          <Code2 class="w-3 h-3 text-slate-400" />
           Linguagens:
         </span>
 
-        <div class="flex flex-wrap items-center gap-1.5">
+        <div class="flex flex-wrap items-center gap-1">
           <button
             v-for="lang in availableLanguages"
             :key="lang"
             type="button"
             :data-testid="`chip-lang-${lang}`"
             :aria-pressed="isLanguageActive(lang)"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               isLanguageActive(lang)
-                ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 shadow-sm shadow-emerald-500/10 font-bold'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border-slate-600 font-bold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleLanguage(lang)"
           >
             <span>{{ lang }}</span>
             <span
-              class="px-1.5 py-0.2 rounded-full text-[10px]"
-              :class="isLanguageActive(lang) ? 'bg-emerald-500/30 text-emerald-300' : 'bg-slate-800 text-slate-400'"
+              class="px-1 py-0.2 rounded-none text-[9px]"
+              :class="isLanguageActive(lang) ? 'bg-slate-700 text-slate-200' : 'bg-slate-800 text-slate-500'"
             >
               {{ languageCounts[lang] }}
             </span>
@@ -249,34 +248,34 @@ defineExpose({
 
       <div
         v-if="availableTags.length > 0"
-        class="flex flex-col sm:flex-row sm:items-center gap-2 text-xs pt-1 border-t border-slate-800/50"
+        class="flex flex-col sm:flex-row sm:items-center gap-1.5 text-xs pt-1 border-t border-slate-800"
       >
-        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-400 shrink-0">
-          <TagIcon class="w-3.5 h-3.5 text-amber-400" />
+        <span class="inline-flex items-center gap-1 font-mono font-semibold text-slate-400 shrink-0 text-[11px]">
+          <TagIcon class="w-3 h-3 text-amber-400" />
           Tags & Links:
         </span>
 
-        <div class="flex flex-wrap items-center gap-1.5">
+        <div class="flex flex-wrap items-center gap-1">
           <button
             v-for="tag in availableTags"
             :key="tag"
             type="button"
             :data-testid="`chip-tag-${tag}`"
             :aria-pressed="isTagActive(tag)"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[10px] font-mono border transition"
             :class="[
               isTagActive(tag)
-                ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 shadow-sm shadow-amber-500/10 font-bold'
-                : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700'
+                ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 font-bold'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
             ]"
             @click="activeFilter.toggleTag(tag)"
           >
-            <Link v-if="tag === 'URL'" class="w-3 h-3 text-amber-400 shrink-0" />
-            <TagIcon v-else class="w-3 h-3 text-amber-400 shrink-0" />
+            <Link v-if="tag === 'URL'" class="w-2.5 h-2.5 text-amber-400 shrink-0" />
+            <TagIcon v-else class="w-2.5 h-2.5 text-amber-400 shrink-0" />
             <span>{{ tag }}</span>
             <span
-              class="px-1.5 py-0.2 rounded-full text-[10px]"
-              :class="isTagActive(tag) ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-800 text-slate-400'"
+              class="px-1 py-0.2 rounded-none text-[9px]"
+              :class="isTagActive(tag) ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-800 text-slate-500'"
             >
               {{ tagCounts[tag] }}
             </span>
